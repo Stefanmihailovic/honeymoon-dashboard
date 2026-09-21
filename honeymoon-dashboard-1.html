@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💕 Honeymoon Dashboard</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --primary:#c8956c; --secondary:#e8b89a; --dark:#2c1810;
+            --light:#fdf6f0; --green:#5a8a6a; --gold:#d4a853;
+            --aus:#c75b3a; --sg:#c8394b; --text:#3a2a1a;
+            --teal:#00897b; --purple:#7b1fa2; --blue:#1a6fa0;
+        }
+        body { font-family:'Segoe UI',sans-serif; background:linear-gradient(135deg,#fdf6f0,#f5e6d8); color:var(--text); }
+
+        /* HEADER */
+        .header { background:linear-gradient(135deg,#2c1810,#5c3420,#8b4513); color:white; padding:30px 20px; text-align:center; }
+        .header h1 { font-size:2.4em; margin-bottom:8px; text-shadow:2px 2px 10px rgba(0,0,0,0.3); }
+        .header p { font-size:1.05em; opacity:0.85; }
+        .hearts { animation:pulse 2s infinite; display:inline-block; }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+        .trip-stats { display:flex; justify-content:center; gap:20px; margin-top:18px; flex-wrap:wrap; }
+        .trip-stat { background:rgba(255,255,255,0.15); padding:10px 22px; border-radius:30px; font-size:0.9em; text-align:center; }
+        .trip-stat strong { display:block; font-size:1.3em; }
+
+        /* NAV */
+        .nav { background:white; padding:8px 15px; display:flex; justify-content:center; flex-wrap:wrap; gap:5px; position:sticky; top:0; z-index:100; box-shadow:0 2px 15px rgba(0,0,0,0.1); }
+        .nav-btn { padding:8px 14px; border:none; border-radius:20px; cursor:pointer; font-size:0.8em; font-weight:600; background:var(--light); color:var(--text); transition:all 0.25s; }
+        .nav-btn:hover, .nav-btn.active { background:var(--primary); color:white; transform:translateY(-2px); box-shadow:0 4px 12px rgba(200,149,108,0.4); }
+
+        /* LAYOUT */
+        .container { max-width:1200px; margin:0 auto; padding:25px 18px; }
+        .section { display:none; }
+        .section.active { display:block; animation:fadeIn 0.4s ease; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+        /* SUB-TABS */
+        .sub-tabs { display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
+        .sub-tab { padding:7px 16px; border:2px solid var(--secondary); border-radius:20px; cursor:pointer; font-size:0.82em; font-weight:600; background:white; color:var(--text); transition:all 0.25s; }
+        .sub-tab:hover, .sub-tab.active { background:var(--primary); border-color:var(--primary); color:white; }
+        .tab-pane { display:none; }
+        .tab-pane.active { display:block; animation:fadeIn 0.3s ease; }
+
+        /* SECTION HEADER */
+        .sec-head { text-align:center; margin-bottom:30px; }
+        .sec-head h2 { font-size:1.9em; color:var(--dark); margin-bottom:8px; }
+        .sec-head p { color:#888; }
+        .divider { width:55px; height:4px; background:linear-gradient(to right,var(--primary),var(--gold)); margin:10px auto; border-radius:2px; }
+        .cat-head { font-size:1.2em; font-weight:800; color:var(--dark); margin:25px 0 14px; padding-bottom:7px; border-bottom:3px solid var(--secondary); display:flex; align-items:center; gap:8px; }
+
+        /* NOTES */
+        .note { padding:13px 18px; border-radius:0 10px 10px 0; margin:12px 0; font-size:0.88em; line-height:1.5; }
+        .note-warn    { background:linear-gradient(135deg,#fff3cd,#ffeaa7); border-left:4px solid var(--gold); }
+        .note-success { background:linear-gradient(135deg,#d4edda,#c3e6cb); border-left:4px solid #28a745; }
+        .note-danger  { background:linear-gradient(135deg,#fde8e8,#fad7d7); border-left:4px solid #e74c3c; }
+        .note-info    { background:linear-gradient(135deg,#cce5ff,#b8daff); border-left:4px solid #2980b9; }
+
+        /* TAGS */
+        .tag { display:inline-block; padding:2px 9px; border-radius:20px; font-size:0.71em; font-weight:700; margin:4px 3px 0 0; }
+        .t-flight    { background:#e8f4fd; color:#2980b9; }
+        .t-hotel     { background:#fef9e7; color:var(--gold); }
+        .t-activity  { background:#eafaf1; color:#27ae60; }
+        .t-sg        { background:#fce4e6; color:var(--sg); }
+        .t-aus       { background:#fde9e4; color:var(--aus); }
+        .t-camper    { background:#e8f6f3; color:var(--teal); }
+        .t-ok        { background:#d4edda; color:#155724; }
+        .t-opera     { background:#f3e5f5; color:var(--purple); }
+
+        /* BOOKING STATUS */
+        .book-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(175px,1fr)); gap:10px; margin-bottom:25px; }
+        .book-item { background:white; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 12px rgba(0,0,0,0.07); border-top:4px solid #ccc; }
+        .book-item.ok  { border-top-color:#28a745; }
+        .book-item.meh { border-top-color:#ffc107; }
+        .book-item.no  { border-top-color:#dc3545; }
+        .book-icon { font-size:1.7em; margin-bottom:5px; }
+        .book-name { font-weight:700; font-size:0.82em; color:var(--dark); margin-bottom:5px; }
+        .book-status { font-size:0.7em; font-weight:700; padding:2px 8px; border-radius:20px; }
+        .bs-ok  { background:#d4edda; color:#155724; }
+        .bs-meh { background:#fff3cd; color:#856404; }
+        .bs-no  { background:#fde8e8; color:#c0392b; }
+
+        /* PROGRESS */
+        .prog-box { background:white; border-radius:14px; padding:22px; margin-bottom:25px; box-shadow:0 4px 18px rgba(0,0,0,0.07); }
+        .prog-box h3 { margin-bottom:16px; color:var(--dark); }
+        .prog-item { margin-bottom:12px; }
+        .prog-label { display:flex; justify-content:space-between; font-size:0.85em; margin-bottom:4px; }
+        .prog-bar { height:9px; background:var(--light); border-radius:9px; overflow:hidden; }
+        .prog-fill { height:100%; border-radius:9px; background:linear-gradient(to right,var(--primary),var(--gold)); transition:width 1.5s ease; }
+
+        /* WEATHER */
+        .wx-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-bottom:25px; }
+        .wx-card { background:white; border-radius:13px; padding:18px; text-align:center; box-shadow:0 3px 12px rgba(0,0,0,0.07); }
+        .wx-icon { font-size:2.6em; margin-bottom:7px; }
+        .wx-city { font-weight:700; font-size:1em; color:var(--dark); }
+        .wx-month { font-size:0.76em; color:#888; margin-bottom:7px; }
+        .wx-temp { font-size:1.6em; font-weight:800; color:var(--primary); }
+        .wx-desc { font-size:0.78em; color:#888; margin-top:5px; }
+
+        /* TIMELINE */
+        .timeline { position:relative; padding:8px 0; }
+        .timeline::before { content:''; position:absolute; left:50%; top:0; bottom:0; width:3px; background:linear-gradient(to bottom,var(--sg),#7fb3d3,var(--aus)); transform:translateX(-50%); }
+        .tl-row { display:flex; justify-content:flex-end; padding-right:calc(50% + 32px); margin-bottom:22px; position:relative; }
+        .tl-row:nth-child(even) { justify-content:flex-start; padding-right:0; padding-left:calc(50% + 32px); }
+        .tl-dot { position:absolute; left:50%; top:16px; width:16px; height:16px; border-radius:50%; transform:translateX(-50%); border:3px solid white; z-index:1; }
+        .tl-card { background:white; border-radius:13px; padding:16px; max-width:420px; width:100%; box-shadow:0 4px 16px rgba(0,0,0,0.09); transition:transform 0.2s; cursor:pointer; }
+        .tl-card:hover { transform:scale(1.02); }
+        .tl-date { font-size:0.72em; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px; }
+        .tl-card h3 { font-size:1.05em; margin-bottom:5px; }
+        .tl-card p { font-size:0.82em; opacity:0.7; line-height:1.4; }
+
+        /* CONFIRMED BANNERS */
+        .banner { color:white; border-radius:14px; padding:18px 22px; margin-bottom:20px; display:flex; align-items:center; gap:14px; box-shadow:0 4px 18px rgba(0,0,0,0.15); }
+        .banner.green  { background:linear-gradient(135deg,#155724,#1e7e34); }
+        .banner.blue   { background:linear-gradient(135deg,#1a6fa0,#003d5b); }
+        .banner.orange { background:linear-gradient(135deg,#c75b3a,#8b2a1a); }
+        .banner.purple { background:linear-gradient(135deg,#4a148c,#7b1fa2); }
+        .banner.teal   { background:linear-gradient(135deg,#00695c,#00897b); }
+        .banner.maui   { background:linear-gradient(135deg,#e67e22,#ca6f1e); }
+        .ban-icon { font-size:2.3em; flex-shrink:0; }
+        .ban-body h3 { font-size:1.05em; font-weight:800; margin-bottom:3px; }
+        .ban-body p  { font-size:0.82em; opacity:0.85; line-height:1.4; }
+        .ban-badge { display:inline-block; background:rgba(255,255,255,0.22); padding:2px 11px; border-radius:20px; font-size:0.73em; font-weight:700; margin-top:6px; }
+
+        /* MAUI CARD */
+        .maui-card { background:linear-gradient(135deg,#e67e22,#ca6f1e); border-radius:16px; padding:25px; color:white; margin-bottom:22px; }
+        .maui-card h2 { font-size:1.6em; font-weight:900; margin-bottom:5px; }
+        .maui-card .sub { font-size:0.88em; opacity:0.85; margin-bottom:18px; }
+        .maui-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+        .maui-item { background:rgba(255,255,255,0.15); padding:13px; border-radius:11px; text-align:center; }
+        .maui-item .mi { font-size:1.7em; margin-bottom:5px; }
+        .maui-item h4 { font-size:0.72em; opacity:0.78; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+        .maui-item p  { font-size:0.92em; font-weight:700; }
+        .maui-tip { background:rgba(255,255,255,0.15); border-radius:11px; padding:13px; margin-top:14px; font-size:0.84em; line-height:1.6; }
+
+        /* FLIGHT CARDS */
+        .flight-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
+        .f-card { background:white; border-radius:16px; overflow:hidden; box-shadow:0 5px 22px rgba(0,0,0,0.09); transition:transform 0.25s; }
+        .f-card:hover { transform:translateY(-4px); }
+        .f-head { padding:18px; color:white; }
+        .f-head.klm     { background:linear-gradient(135deg,#00a1de,#003f8a); }
+        .f-head.sia     { background:linear-gradient(135deg,#003B6F,#001f45); }
+        .f-head.vna     { background:linear-gradient(135deg,#d4000a,#8b0000); }
+        .f-head.dom     { background:linear-gradient(135deg,#e67e22,#d35400); }
+        .f-route { display:flex; align-items:center; gap:10px; margin:10px 0; }
+        .f-city .code { font-size:1.8em; font-weight:800; }
+        .f-city .city { font-size:0.76em; opacity:0.8; }
+        .f-line { flex:1; display:flex; flex-direction:column; align-items:center; }
+        .f-line .dur { font-size:0.75em; opacity:0.8; margin-bottom:3px; }
+        .f-line .ln  { width:100%; height:2px; background:rgba(255,255,255,0.4); }
+        .f-body { padding:16px; }
+        .f-details { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .fd { background:var(--light); padding:9px 11px; border-radius:9px; }
+        .fd .lbl { font-size:0.7em; color:#888; text-transform:uppercase; }
+        .fd .val { font-size:0.9em; font-weight:700; color:var(--dark); margin-top:2px; }
+        .tip { background:#fff8f0; border-left:3px solid var(--primary); padding:7px 11px; border-radius:0 7px 7px 0; font-size:0.78em; color:#a0522d; margin-top:10px; }
+        .tip.purple { background:#f3e5f5; border-left-color:var(--purple); color:#4a148c; }
+
+        /* DAY CARDS */
+        .day-card { background:white; border-radius:16px; overflow:hidden; box-shadow:0 5px 22px rgba(0,0,0,0.08); margin-bottom:20px; }
+        .day-head { padding:18px; color:white; }
+        .day-head.sg     { background:linear-gradient(135deg,var(--sg),#8b1a2a); }
+        .day-head.syd    { background:linear-gradient(135deg,var(--aus),#8b2a1a); }
+        .day-head.au     { background:linear-gradient(135deg,var(--blue),#003d5b); }
+        .day-head.opera  { background:linear-gradient(135deg,#4a148c,#7b1fa2); }
+        .day-head.cairns { background:linear-gradient(135deg,var(--teal),#00695c); }
+        .day-num   { font-size:0.8em; opacity:0.8; font-weight:600; text-transform:uppercase; letter-spacing:1px; }
+        .day-title { font-size:1.3em; font-weight:800; margin:4px 0; }
+        .day-date  { font-size:0.8em; opacity:0.75; }
+        .day-body  { padding:18px; }
+        .act { display:flex; gap:13px; margin-bottom:14px; }
+        .act-time { font-size:0.76em; font-weight:700; color:var(--primary); min-width:50px; text-align:right; padding-top:2px; flex-shrink:0; }
+        .act-line { flex:1; border-left:2px solid var(--secondary); padding-left:13px; padding-bottom:10px; }
+        .act-line.op { border-left-color:var(--purple); }
+        .act-title { font-weight:700; font-size:0.9em; margin-bottom:3px; }
+        .act-title.op { color:var(--purple); }
+        .act-desc  { font-size:0.79em; color:#888; line-height:1.5; }
+
+        /* HIGHLIGHT GRID */
+        .hl-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:22px; }
+        .hl-card { background:white; border-radius:13px; padding:17px; box-shadow:0 3px 15px rgba(0,0,0,0.07); border-top:4px solid var(--primary); transition:transform 0.2s; }
+        .hl-card:hover { transform:translateY(-4px); }
+        .hl-card.op { border-top-color:var(--purple); background:linear-gradient(135deg,#fff,#faf5ff); }
+        .hl-icon { font-size:2.2em; margin-bottom:9px; }
+        .hl-card h4 { font-size:0.96em; margin-bottom:5px; color:var(--dark); }
+        .hl-card p  { font-size:0.8em; color:#888; line-height:1.5; }
+        .hl-tag { display:inline-block; padding:2px 9px; border-radius:20px; font-size:0.7em; font-weight:700; margin-top:7px; background:var(--light); color:var(--primary); }
+        .hl-tag.op { background:#f3e5f5; color:var(--purple); }
+
+        /* ROUTE MAP */
+        .route-box { background:white; border-radius:16px; padding:25px; box-shadow:0 5px 22px rgba(0,0,0,0.08); margin-bottom:22px; }
+        .route-stops { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin:22px 0; }
+        .r-stop { text-align:center; flex:1; min-width:85px; }
+        .r-dot { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--gold)); color:white; font-size:1.3em; display:flex; align-items:center; justify-content:center; margin:0 auto 7px; box-shadow:0 4px 10px rgba(200,149,108,0.35); }
+        .r-dot.ok { background:linear-gradient(135deg,#155724,#28a745); }
+        .r-name { font-weight:700; font-size:0.82em; }
+        .r-date { font-size:0.7em; color:#888; margin-top:2px; }
+        .r-status { font-size:0.7em; font-weight:700; color:var(--primary); }
+        .r-status.ok { color:#155724; }
+        .r-conn { flex:0.4; height:3px; background:linear-gradient(to right,var(--primary),var(--gold)); position:relative; min-width:20px; }
+        .r-conn::after { content:'🚐'; position:absolute; top:50%; left:50%; transform:translate(-50%,-60%); font-size:1em; }
+
+        /* REEF CARD */
+        .reef-card { background:linear-gradient(135deg,#003d5b,#00728a); border-radius:16px; padding:25px; color:white; margin-bottom:22px; }
+        .reef-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; margin-top:16px; }
+        .reef-item { background:rgba(255,255,255,0.1); padding:13px; border-radius:11px; text-align:center; }
+        .reef-item .ri { font-size:1.7em; margin-bottom:5px; }
+        .reef-item h4 { font-size:0.85em; margin-bottom:3px; }
+        .reef-item p  { font-size:0.77em; opacity:0.82; }
+
+        /* HOTEL CARDS */
+        .hotel-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
+        .h-card { background:white; border-radius:16px; overflow:hidden; box-shadow:0 5px 22px rgba(0,0,0,0.09); transition:transform 0.25s; }
+        .h-card:hover { transform:translateY(-4px); }
+        .h-img { height:85px; display:flex; align-items:center; justify-content:center; font-size:3em; position:relative; }
+        .h-img.sg-bg     { background:linear-gradient(135deg,#c8394b15,#c8394b0a); }
+        .h-img.cairns-bg { background:linear-gradient(135deg,#00897b15,#00897b0a); }
+        .h-img.maui-bg   { background:linear-gradient(135deg,#e67e2215,#e67e220a); }
+        .h-img.syd-bg    { background:linear-gradient(135deg,#c75b3a15,#c75b3a0a); }
+        .h-ribbon { position:absolute; top:8px; right:8px; background:#155724; color:white; padding:2px 9px; border-radius:20px; font-size:0.68em; font-weight:700; }
+        .h-info { padding:16px; }
+        .h-info h3 { font-size:1em; margin-bottom:3px; }
+        .h-loc { font-size:0.8em; color:#888; margin-bottom:5px; }
+        .h-stars { color:#f39c12; font-size:0.88em; }
+        .h-desc { font-size:0.8em; color:#888; margin-top:7px; line-height:1.5; }
+        .h-status { font-size:0.8em; font-weight:700; margin-top:7px; }
+        .h-feats { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; }
+        .feat { background:var(--light); padding:2px 9px; border-radius:20px; font-size:0.73em; }
+
+        /* OPERA TICKET */
+        .ticket { background:linear-gradient(135deg,#1a0533,#4a148c); color:white; border-radius:16px; overflow:hidden; box-shadow:0 10px 35px rgba(74,20,140,0.4); margin-bottom:22px; }
+        .ticket-head { padding:25px 25px 18px; border-bottom:2px dashed rgba(255,255,255,0.2); }
+        .ticket-venue { font-size:0.75em; opacity:0.7; text-transform:uppercase; letter-spacing:2px; margin-bottom:5px; }
+        .ticket-title { font-size:1.65em; font-weight:900; margin-bottom:4px; }
+        .ticket-sub   { font-size:0.85em; opacity:0.8; }
+        .ticket-body  { padding:20px 25px; display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:14px; }
+        .td { text-align:center; }
+        .td-lbl { font-size:0.67em; opacity:0.6; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
+        .td-val { font-size:1em; font-weight:800; }
+        .ticket-foot { padding:12px 25px; background:rgba(0,0,0,0.2); font-size:0.8em; opacity:0.85; }
+
+        /* SYDNEY HOTELS */
+        .sh-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+        .sh-card { background:white; border-radius:16px; overflow:hidden; box-shadow:0 5px 22px rgba(0,0,0,0.09); transition:transform 0.25s; border:2px solid transparent; }
+        .sh-card:hover { transform:translateY(-4px); }
+        .sh-card.rec { border-color:var(--gold); }
+        .sh-banner { height:70px; display:flex; align-items:center; justify-content:center; font-size:2.6em; position:relative; }
+        .sh-banner.lux  { background:linear-gradient(135deg,#2c1810,#5c3420); }
+        .sh-banner.prem { background:linear-gradient(135deg,#003B6F,#00528a); }
+        .sh-banner.bout { background:linear-gradient(135deg,#5a2d82,#7b3fa0); }
+        .sh-banner.mid  { background:linear-gradient(135deg,#1a6fa0,#2980b9); }
+        .sh-ribbon { position:absolute; top:8px; right:8px; background:var(--gold); color:white; padding:2px 9px; border-radius:20px; font-size:0.67em; font-weight:700; }
+        .sh-body { padding:16px; }
+        .sh-name  { font-size:1.05em; font-weight:800; color:var(--dark); margin-bottom:3px; }
+        .sh-area  { font-size:0.78em; color:#888; margin-bottom:8px; }
+        .sh-price { font-size:1.2em; font-weight:800; color:var(--primary); }
+        .sh-price span { font-size:0.56em; font-weight:400; color:#888; }
+        .sh-total { font-size:0.76em; color:#888; margin-bottom:9px; }
+        .sh-pros li { font-size:0.79em; color:#555; margin-bottom:3px; list-style:none; }
+        .sh-pros li::before { content:'✓ '; color:var(--green); font-weight:700; }
+        .sh-tags { display:flex; flex-wrap:wrap; gap:5px; margin:9px 0; }
+        .htag { padding:2px 8px; border-radius:20px; font-size:0.68em; font-weight:600; background:var(--light); }
+        .htag.view  { background:#e8f4fd; color:#2980b9; }
+        .htag.honey { background:#fce4e6; color:#c0392b; }
+        .htag.val   { background:#eafaf1; color:#27ae60; }
+        .book-btn { display:block; text-align:center; background:linear-gradient(135deg,var(--primary),var(--gold)); color:white; padding:8px; border-radius:9px; font-weight:700; font-size:0.82em; margin-top:11px; cursor:pointer; border:none; width:100%; transition:opacity 0.2s; }
+        .book-btn:hover { opacity:0.85; }
+
+        /* CHECKLIST */
+        .cl-box { background:white; border-radius:16px; padding:20px; box-shadow:0 4px 18px rgba(0,0,0,0.07); }
+        .cl-item { display:flex; align-items:flex-start; gap:11px; padding:8px 5px; border-bottom:1px solid #f0f0f0; cursor:pointer; border-radius:6px; transition:background 0.2s; }
+        .cl-item:last-child { border-bottom:none; }
+        .cl-item:hover { background:#fdf6f0; }
+        .cl-box-chk { width:21px; height:21px; border:2px solid var(--secondary); border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.82em; transition:all 0.2s; margin-top:1px; }
+        .cl-item.done .cl-box-chk { background:var(--green); border-color:var(--green); color:white; }
+        .cl-item.done .cl-txt { text-decoration:line-through; color:#aaa; }
+        .cl-txt { font-size:0.85em; line-height:1.4; }
+        .cl-sub { display:block; font-size:0.8em; color:#aaa; margin-top:2px; }
+
+        /* PACKING */
+        .pack-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+        .pack-cat { background:white; border-radius:13px; padding:17px; box-shadow:0 3px 15px rgba(0,0,0,0.07); }
+        .pack-cat h4 { color:var(--dark); margin-bottom:11px; padding-bottom:8px; border-bottom:2px solid var(--secondary); font-size:0.92em; }
+        .pack-item { display:flex; align-items:flex-start; gap:7px; margin-bottom:6px; cursor:pointer; padding:3px 4px; border-radius:5px; transition:background 0.2s; }
+        .pack-item:hover { background:#fdf6f0; }
+        .pack-cb { width:16px; height:16px; border:2px solid var(--secondary); border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:0.66em; flex-shrink:0; margin-top:2px; transition:all 0.2s; }
+        .pack-item.done .pack-cb { background:var(--green); border-color:var(--green); color:white; }
+        .pack-item.done .pack-lbl { text-decoration:line-through; color:#bbb; }
+        .pack-lbl { font-size:0.82em; line-height:1.4; }
+        .pack-note { display:block; font-size:0.73em; color:#aaa; }
+        .pack-counter { text-align:right; font-size:0.82em; color:var(--primary); font-weight:700; margin-bottom:13px; }
+
+        /* PREP CARDS */
+        .prep-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:20px; }
+        .prep-card { background:white; border-radius:16px; overflow:hidden; box-shadow:0 4px 18px rgba(0,0,0,0.07); }
+        .prep-head { padding:14px 18px; color:white; display:flex; align-items:center; gap:11px; }
+        .prep-head.urg { background:linear-gradient(135deg,#e74c3c,#c0392b); }
+        .prep-head.imp { background:linear-gradient(135deg,#e67e22,#d35400); }
+        .prep-head.nor { background:linear-gradient(135deg,#27ae60,#229954); }
+        .prep-head.inf { background:linear-gradient(135deg,#2980b9,#1a6fa0); }
+        .prep-icon { font-size:1.8em; }
+        .prep-head h3 { font-size:1em; font-weight:800; }
+        .prep-head p  { font-size:0.77em; opacity:0.85; }
+        .prep-body { padding:13px 17px; }
+        .dl { display:inline-block; padding:2px 9px; border-radius:20px; font-size:0.68em; font-weight:700; margin-bottom:8px; }
+        .dl-now  { background:#fde8e8; color:#c0392b; }
+        .dl-soon { background:#fff3cd; color:#856404; }
+        .dl-ok   { background:#d4edda; color:#155724; }
+
+        /* TIPS */
+        .tips-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px; }
+        .tip-card { background:white; border-radius:13px; padding:17px; box-shadow:0 3px 15px rgba(0,0,0,0.07); }
+        .tip-card h4 { font-size:0.92em; margin-bottom:8px; color:var(--dark); }
+        .tip-card ul { padding-left:17px; }
+        .tip-card ul li { font-size:0.8em; color:#666; margin-bottom:4px; line-height:1.5; }
+
+        /* BUDGET */
+        .budget-card { background:white; border-radius:16px; padding:20px; box-shadow:0 5px 22px rgba(0,0,0,0.07); margin-bottom:20px; }
+        .b-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f5f5f5; }
+        .b-item:last-child { border-bottom:none; }
+        .b-label { display:flex; align-items:center; gap:9px; font-size:0.85em; }
+        .b-amount { font-weight:700; color:var(--primary); font-size:0.88em; }
+
+        @media(max-width:768px){
+            .timeline::before{left:18px}
+            .tl-row{padding-right:0;padding-left:50px;justify-content:flex-start}
+            .tl-row:nth-child(even){padding-left:50px}
+            .tl-dot{left:18px}
+            .header h1{font-size:1.7em}
+            .route-stops{flex-direction:column;align-items:center}
+            .r-conn{width:3px;height:22px;transform:rotate(90deg)}
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <h1><span class="hearts">💕</span> Our Honeymoon <span class="hearts">💕</span></h1>
+    <p>Singapore & Australië • September – Oktober 2026</p>
+    <div class="trip-stats">
+        <div class="trip-stat"><strong>22 Dagen</strong>Totale reis</div>
+        <div class="trip-stat"><strong>18 sep</strong>Vertrek</div>
+        <div class="trip-stat"><strong>3 Landen</strong>SG • AU • VN</div>
+        <div class="trip-stat"><strong>9 okt</strong>Thuis</div>
+    </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+    <button class="nav-btn" onclick="go('overview')">🗺️ Overview</button>
+    <button class="nav-btn" onclick="go('flights')">✈️ Vluchten</button>
+    <button class="nav-btn" onclick="go('singapore')">🇸🇬 Singapore</button>
+    <button class="nav-btn" onclick="go('australia')">🇦🇺 Australië</button>
+    <button class="nav-btn" onclick="go('sydney')">🌉 Sydney</button>
+    <button class="nav-btn" onclick="go('verblijf')">🏨 Verblijf</button>
+    <button class="nav-btn" onclick="go('sydney-hotels')">🏨 Sydney Hotels</button>
+    <button class="nav-btn" onclick="go('paklijst')">🎒 Paklijst</button>
+    <button class="nav-btn" onclick="go('voorbereiding')">📋 Voorbereiding</button>
+    <button class="nav-btn" onclick="go('tips')">💡 Tips & Budget</button>
+</div>
+
+<div class="container">
+
+<!-- ==================== OVERVIEW ==================== -->
+<div id="overview" class="section active">
+    <div class="sec-head"><h2>✨ Jullie Huwelijksreis</h2><div class="divider"></div><p>22 magische dagen door Zuidoost-Azië & Australië</p></div>
+
+    <div class="book-grid">
+        <div class="book-item ok"><div class="book-icon">✈️</div><div class="book-name">KLM Vlucht</div><span class="book-status bs-ok">✅ Geboekt</span></div>
+        <div class="book-item ok"><div class="book-icon">✈️</div><div class="book-name">Singapore Airlines</div><span class="book-status bs-ok">✅ Geboekt</span></div>
+        <div class="book-item ok"><div class="book-icon">✈️</div><div class="book-name">Vietnam Airlines</div><span class="book-status bs-ok">✅ Geboekt</span></div>
+        <div class="book-item ok"><div class="book-icon">🏨</div><div class="book-name">QT Hotel Singapore</div><span class="book-status bs-ok">✅ Geboekt</span></div>
+        <div class="book-item ok"><div class="book-icon">🏨</div><div class="book-name">Pacific Hotel Cairns</div><span class="book-status bs-ok">✅ Geboekt</span></div>
+        <div class="book-item ok"><div class="book-icon">🚐</div><div class="book-name">Maui Campervan</div><span class="book-status bs-ok">✅ Geboekt</span></div>
+        <div class="book-item ok"><div class="book-icon">🎭</div><div class="book-name">Sydney Opera House</div><span class="book-status bs-ok">✅ 6 okt 18:30</span></div>
+        <div class="book-item no"><div class="book-icon">✈️</div><div class="book-name">BNE → SYD Vlucht</div><span class="book-status bs-no">⚠️ Nog boeken</span></div>
+        <div class="book-item no"><div class="book-icon">🏨</div><div class="book-name">Sydney Hotel</div><span class="book-status bs-no">⚠️ Nog boeken</span></div>
+        <div class="book-item meh"><div class="book-icon">🐠</div><div class="book-name">Reef Boottocht</div><span class="book-status bs-meh">📅 Aanbevolen</span></div>
+        <div class="book-item meh"><div class="book-icon">⛵</div><div class="book-name">Whitehaven Beach</div><span class="book-status bs-meh">📅 Aanbevolen</span></div>
+        <div class="book-item meh"><div class="book-icon">🍽️</div><div class="book-name">Afscheidsdiner</div><span class="book-status bs-meh">📅 Reserveer snel</span></div>
+    </div>
+
+    <div class="wx-grid">
+        <div class="wx-card"><div class="wx-icon">🌦️</div><div class="wx-city">Amsterdam</div><div class="wx-month">18 sep</div><div class="wx-temp">16°C</div><div class="wx-desc">Fris & herfstachtig</div></div>
+        <div class="wx-card"><div class="wx-icon">🌤️</div><div class="wx-city">Singapore</div><div class="wx-month">Eind september</div><div class="wx-temp">30°C</div><div class="wx-desc">Warm & vochtig</div></div>
+        <div class="wx-card"><div class="wx-icon">☀️</div><div class="wx-city">Cairns</div><div class="wx-month">Sep–Okt</div><div class="wx-temp">27°C</div><div class="wx-desc">Droog seizoen – perfect!</div></div>
+        <div class="wx-card"><div class="wx-icon">🌞</div><div class="wx-city">Sydney</div><div class="wx-month">Begin oktober</div><div class="wx-temp">20°C</div><div class="wx-desc">Lente – heerlijk mild</div></div>
+    </div>
+
+    <div class="prog-box">
+        <h3>📋 Planning Voortgang</h3>
+        <div class="prog-item"><div class="prog-label"><span>✈️ Vluchten</span><span>75%</span></div><div class="prog-bar"><div class="prog-fill" data-w="75"></div></div></div>
+        <div class="prog-item"><div class="prog-label"><span>🏨 Verblijf</span><span>75%</span></div><div class="prog-bar"><div class="prog-fill" data-w="75"></div></div></div>
+        <div class="prog-item"><div class="prog-label"><span>🚐 Maui Campervan</span><span>100%</span></div><div class="prog-bar"><div class="prog-fill" data-w="100"></div></div></div>
+        <div class="prog-item"><div class="prog-label"><span>🎯 Activiteiten</span><span>65%</span></div><div class="prog-bar"><div class="prog-fill" data-w="65"></div></div></div>
+        <div class="prog-item"><div class="prog-label"><span>📋 Voorbereiding</span><span>20%</span></div><div class="prog-bar"><div class="prog-fill" data-w="20"></div></div></div>
+    </div>
+
+    <div class="sec-head" style="margin-top:30px"><h2>🗓️ Volledige Tijdlijn</h2><div class="divider"></div></div>
+    <div class="timeline">
+        <div class="tl-row"><div class="tl-dot" style="background:#003f8a;box-shadow:0 0 0 3px #003f8a"></div><div class="tl-card" onclick="go('flights')"><div class="tl-date" style="color:#003f8a">18 september</div><h3>✈️ Amsterdam → Singapore</h3><p>KLM • Vertrek ~21:00 • ~13 uur</p><span class="tag t-flight">✈️ KLM</span><span class="tag t-ok">✅ Geboekt</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:var(--sg);box-shadow:0 0 0 3px var(--sg)"></div><div class="tl-card" onclick="go('singapore')"><div class="tl-date" style="color:var(--sg)">19 september</div><h3>🇸🇬 Aankomst Singapore</h3><p>~15:40 • QT Hotel inchecken ✅ • Marina Bay avond</p><span class="tag t-sg">🇸🇬 Singapore</span><span class="tag t-hotel">🏨 QT Hotel ✅</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:var(--sg);box-shadow:0 0 0 3px var(--sg)"></div><div class="tl-card" onclick="go('singapore')"><div class="tl-date" style="color:var(--sg)">20 september</div><h3>🌿 Gardens by the Bay + Nachtshow</h3><p>Cloud Forest, Flower Dome • Garden Rhapsody 19:45 & 20:45</p><span class="tag t-activity">🎆 Garden Rhapsody</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:var(--sg);box-shadow:0 0 0 3px var(--sg)"></div><div class="tl-card" onclick="go('singapore')"><div class="tl-date" style="color:var(--sg)">21 september</div><h3>🏛️ Chinatown, Cultuur & Vertrek</h3><p>Chinatown, Haji Lane, Chilli Crab lunch • Avond: vlucht Cairns</p><span class="tag t-sg">🇸🇬 Laatste dag</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:#003B6F;box-shadow:0 0 0 3px #003B6F"></div><div class="tl-card" onclick="go('flights')"><div class="tl-date" style="color:#003B6F">21 september</div><h3>✈️ Singapore → Cairns</h3><p>Singapore Airlines • ~7u 30min • Aankomst Cairns zelfde dag</p><span class="tag t-flight">✈️ SIA</span><span class="tag t-ok">✅ Geboekt</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:var(--teal);box-shadow:0 0 0 3px var(--teal)"></div><div class="tl-card" onclick="go('verblijf')"><div class="tl-date" style="color:var(--teal)">21 september</div><h3>🏨 Aankomst Cairns – Hotel</h3><p>Pacific Hotel Cairns inchecken ✅ • Esplanade Lagoon • Night Markets</p><span class="tag t-hotel">🏨 Pacific Hotel Cairns ✅</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:#e67e22;box-shadow:0 0 0 3px #e67e22"></div><div class="tl-card" onclick="go('australia')"><div class="tl-date" style="color:#e67e22">22 september</div><h3>🚐 Maui Campervan Ophalen!</h3><p>Ophalen in Cairns ✅ • Camper inrichten • Op weg naar Daintree!</p><span class="tag t-camper">🚐 Maui ✅</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:#27ae60;box-shadow:0 0 0 3px #27ae60"></div><div class="tl-card" onclick="go('australia')"><div class="tl-date" style="color:#27ae60">22–23 september</div><h3>🌿 Daintree Regenwoud</h3><p>Mossman Gorge, Cape Tribulation • Oudste regenwoud</p><span class="tag t-camper">🚐 Maui</span><span class="tag t-aus">🌿 Daintree</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:#00728a;box-shadow:0 0 0 3px #00728a"></div><div class="tl-card" onclick="go('australia')"><div class="tl-date" style="color:#00728a">24 september</div><h3>🐠 Great Barrier Reef Boottocht</h3><p>Hele dag snorkelen & duiken op het grootste rif ter wereld!</p><span class="tag t-activity">🐠 Reef Tocht</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:var(--aus);box-shadow:0 0 0 3px var(--aus)"></div><div class="tl-card" onclick="go('australia')"><div class="tl-date" style="color:var(--aus)">25–26 september</div><h3>🏖️ Mission Beach → Townsville</h3><p>Cassowary Coast, Magnetic Island dagtrip</p><span class="tag t-camper">🚐 Rijden</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:#7fb3d3;box-shadow:0 0 0 3px #7fb3d3"></div><div class="tl-card" onclick="go('australia')"><div class="tl-date" style="color:#7fb3d3">27–28 september</div><h3>⛵ Airlie Beach & Whitehaven</h3><p>Australië's mooiste strand • Coral Sea zonsondergang</p><span class="tag t-activity">⛵ Whitsundays</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:var(--gold);box-shadow:0 0 0 3px var(--gold)"></div><div class="tl-card" onclick="go('australia')"><div class="tl-date" style="color:var(--gold)">29 sep – 1 okt</div><h3>🌊 Noosa + Glass House Mountains</h3><p>Nationaal park, kustpad, kajak Everglades</p><span class="tag t-activity">🌊 Noosa</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:#8e44ad;box-shadow:0 0 0 3px #8e44ad"></div><div class="tl-card" onclick="go('australia')"><div class="tl-date" style="color:#8e44ad">2–3 oktober</div><h3>🏙️ Brisbane – Maui Inleveren</h3><p>South Bank, GOMA, Story Bridge • Maui inleveren 3 oktober ✅</p><span class="tag t-camper">🚐 Inleveren ✅</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:var(--aus);box-shadow:0 0 0 3px var(--aus)"></div><div class="tl-card" onclick="go('flights')"><div class="tl-date" style="color:var(--aus)">4 oktober</div><h3>✈️ Brisbane → Sydney</h3><p>Binnenlandse vlucht ~1,5 uur</p><span class="tag t-flight">✈️ Binnenlands</span><div class="note note-warn" style="margin-top:7px;font-size:0.77em;padding:7px 11px">⚠️ Nog niet geboekt!</div></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:var(--aus);box-shadow:0 0 0 3px var(--aus)"></div><div class="tl-card" onclick="go('sydney')"><div class="tl-date" style="color:var(--aus)">4–5 oktober</div><h3>🌉 Sydney – Verkennen</h3><p>Opera House, Harbour Bridge, Opera Bar, Bondi Beach</p><span class="tag t-aus">🌉 Sydney</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:var(--purple);box-shadow:0 0 0 3px var(--purple)"></div><div class="tl-card" onclick="go('sydney')"><div class="tl-date" style="color:var(--purple)">6 oktober ⭐</div><h3>🎭 Sydney Opera House!</h3><p>Tickets geboekt ✅ • Aanvang 18:30 • Pre-show drinks Opera Bar</p><span class="tag t-opera">🎭 18:30</span><span class="tag t-ok">✅ Geboekt</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:var(--aus);box-shadow:0 0 0 3px var(--aus)"></div><div class="tl-card" onclick="go('sydney')"><div class="tl-date" style="color:var(--aus)">7–8 oktober</div><h3>🏔️ Blue Mountains & Afscheidsdiner</h3><p>Katoomba dagtrip • Haven cruise • Romantisch laatste diner</p><span class="tag t-aus">🌉 Sydney</span></div></div>
+        <div class="tl-row"><div class="tl-dot" style="background:#d4000a;box-shadow:0 0 0 3px #d4000a"></div><div class="tl-card" onclick="go('flights')"><div class="tl-date" style="color:#d4000a">9 oktober</div><h3>✈️ Sydney → Hanoi → Amsterdam</h3><p>Vietnam Airlines • Via Hanoi naar huis 🏠</p><span class="tag t-flight">✈️ Vietnam Airlines</span><span class="tag t-ok">✅ Geboekt</span></div></div>
+    </div>
+</div>
+
+<!-- ==================== FLIGHTS ==================== -->
+<div id="flights" class="section">
+    <div class="sec-head"><h2>✈️ Vluchten</h2><div class="divider"></div><p>3 van 4 vluchten geboekt</p></div>
+    <div class="note note-success">✅ KLM, Singapore Airlines & Vietnam Airlines geboekt. Alleen <strong>BNE→SYD (4 oktober)</strong> moet nog worden geboekt via qantas.com of jetstar.com.</div>
+    <div class="flight-grid" style="margin-top:20px">
+        <div class="f-card"><div class="f-head klm"><div style="font-weight:700">🔵 KLM Royal Dutch Airlines ✅</div><div class="f-route"><div class="f-city"><div class="code">AMS</div><div class="city">Amsterdam</div></div><div class="f-line"><div class="dur">~13 uur</div><div class="ln"></div></div><div class="f-city"><div class="code">SIN</div><div class="city">Singapore</div></div></div></div><div class="f-body"><div class="f-details"><div class="fd"><div class="lbl">Datum</div><div class="val">18 sep 2026</div></div><div class="fd"><div class="lbl">Vertrek</div><div class="val">~21:00 AMS</div></div><div class="fd"><div class="lbl">Aankomst</div><div class="val">19 sep ~15:40</div></div><div class="fd"><div class="lbl">Status</div><div class="val" style="color:green">✅ Geboekt</div></div></div><div class="tip">💡 Nachtvlucht – neem nekkussen & slaapmasker mee!</div></div></div>
+        <div class="f-card"><div class="f-head sia"><div style="font-weight:700">🟡 Singapore Airlines ✅</div><div class="f-route"><div class="f-city"><div class="code">SIN</div><div class="city">Singapore</div></div><div class="f-line"><div class="dur">~7u 30m</div><div class="ln"></div></div><div class="f-city"><div class="code">CNS</div><div class="city">Cairns</div></div></div></div><div class="f-body"><div class="f-details"><div class="fd"><div class="lbl">Datum</div><div class="val">21 sep 2026</div></div><div class="fd"><div class="lbl">Aankomst</div><div class="val">21 sep Cairns</div></div><div class="fd"><div class="lbl">Duur</div><div class="val">~7u 30min</div></div><div class="fd"><div class="lbl">Status</div><div class="val" style="color:green">✅ Geboekt</div></div></div><div class="tip">💡 Singapore Airlines = 's werelds beste airline!</div></div></div>
+        <div class="f-card" style="border:2px dashed var(--gold)"><div class="f-head dom"><div style="font-weight:700">🟠 Brisbane → Sydney ⚠️</div><div class="f-route"><div class="f-city"><div class="code">BNE</div><div class="city">Brisbane</div></div><div class="f-line"><div class="dur">~1,5 uur</div><div class="ln"></div></div><div class="f-city"><div class="code">SYD</div><div class="city">Sydney</div></div></div></div><div class="f-body"><div class="f-details"><div class="fd"><div class="lbl">Doeldatum</div><div class="val">4 okt 2026</div></div><div class="fd"><div class="lbl">Maatschappij</div><div class="val">Qantas/Jetstar</div></div><div class="fd"><div class="lbl">Kosten</div><div class="val">~€80–€150pp</div></div><div class="fd"><div class="lbl">Status</div><div class="val" style="color:orange">⚠️ Nog boeken!</div></div></div><div class="tip" style="background:#fff3cd;border-color:var(--gold)">📌 Boek via qantas.com of jetstar.com</div></div></div>
+        <div class="f-card"><div class="f-head vna"><div style="font-weight:700">🔴 Vietnam Airlines ✅</div><div class="f-route"><div class="f-city"><div class="code">SYD</div><div class="city">Sydney</div></div><div class="f-line"><div class="dur">via HAN</div><div class="ln"></div></div><div class="f-city"><div class="code">AMS</div><div class="city">Amsterdam</div></div></div></div><div class="f-body"><div class="f-details"><div class="fd"><div class="lbl">Datum</div><div class="val">9 okt 2026</div></div><div class="fd"><div class="lbl">Tussenstop</div><div class="val">Hanoi (HAN)</div></div><div class="fd"><div class="lbl">Totale reis</div><div class="val">~24u+</div></div><div class="fd"><div class="lbl">Status</div><div class="val" style="color:green">✅ Geboekt</div></div></div><div class="tip">💡 Lange thuisvlucht – compressiesokken meenemen!</div></div></div>
+    </div>
+</div>
+
+<!-- ==================== SINGAPORE ==================== -->
+<div id="singapore" class="section">
+    <div class="sec-head"><h2>🇸🇬 Singapore – 3 Dagen</h2><div class="divider"></div><p>19–21 sep • QT Hotel ✅ • Garden City</p></div>
+    <div class="banner green"><div class="ban-icon">🏨</div><div class="ban-body"><h3>QT Hotel Singapore</h3><p>Boutique luxehotel • Centraal • Loopafstand Gardens by the Bay & Marina Bay</p><span class="ban-badge">✅ Bevestigd – 19–21 september 2026 (2 nachten)</span></div></div>
+    <div class="sub-tabs">
+        <button class="sub-tab" onclick="tab('sg','sg-ov')">Overzicht</button>
+        <button class="sub-tab" onclick="tab('sg','sg-d1')">Dag 1 – 19 sep</button>
+        <button class="sub-tab" onclick="tab('sg','sg-d2')">Dag 2 – 20 sep ⭐</button>
+        <button class="sub-tab" onclick="tab('sg','sg-d3')">Dag 3 – 21 sep</button>
+    </div>
+    <div id="sg-ov" class="tab-pane active">
+        <div class="hl-grid">
+            <div class="hl-card"><div class="hl-icon">🌿</div><h4>Gardens by the Bay</h4><p>Supertrees, Cloud Forest & Flower Dome. Garden Rhapsody 19:45 & 20:45!</p><span class="hl-tag">⭐ Must Do</span></div>
+            <div class="hl-card"><div class="hl-icon">🏙️</div><h4>Marina Bay Sands</h4><p>Ce La Vi rooftopbar – open voor iedereen! 57 verdiepingen hoog.</p><span class="hl-tag">📸 Fotoplek</span></div>
+            <div class="hl-card"><div class="hl-icon">🍜</div><h4>Hawker Food</h4><p>UNESCO-erfgoed. Maxwell Food Centre / Lau Pa Sat. Probeer Hainanese Chicken Rice!</p><span class="hl-tag">🍽️ Eten</span></div>
+            <div class="hl-card"><div class="hl-icon">🏛️</div><h4>Culturele Wijken</h4><p>Chinatown, Little India & Kampong Glam – allemaal loopafstand centrum.</p><span class="hl-tag">🗺️ Cultuur</span></div>
+            <div class="hl-card"><div class="hl-icon">🌃</div><h4>Clarke Quay</h4><p>Bars & restaurants aan de rivier. Romantische avond na de lichtshow.</p><span class="hl-tag">🌙 Avond</span></div>
+            <div class="hl-card"><div class="hl-icon">🦀</div><h4>Chilli Crab</h4><p>Singapore's meest iconische gerecht! Jumbo Seafood – reserveer vooraf!</p><span class="hl-tag">🦀 Must Eat</span></div>
+        </div>
+    </div>
+    <div id="sg-d1" class="tab-pane">
+        <div class="day-card"><div class="day-head sg"><div class="day-num">Dag 1</div><div class="day-title">Aankomst & Eerste Indrukken</div><div class="day-date">Zaterdag 19 september 2026</div></div><div class="day-body">
+            <div class="act"><div class="act-time">15:40</div><div class="act-line"><div class="act-title">✈️ Aankomst Changi Airport</div><div class="act-desc">Geniet van de Jewel Changi waterval!</div><div class="tip">💡 MRT Changi → City Hall (~35 min, SGD 2,50)</div></div></div>
+            <div class="act"><div class="act-time">18:30</div><div class="act-line"><div class="act-title">🏨 Inchecken QT Hotel ✅</div><div class="act-desc">Opfrissen & bijkomen van de lange vlucht.</div></div></div>
+            <div class="act"><div class="act-time">20:00</div><div class="act-line"><div class="act-title">🌆 Marina Bay Avondwandeling</div><div class="act-desc">De skyline 's avonds is spectaculair!</div></div></div>
+            <div class="act"><div class="act-time">21:30</div><div class="act-line"><div class="act-title">🍽️ Diner: Lau Pa Sat</div><div class="act-desc">Satay Street – alleen 's avonds open!</div></div></div>
+        </div></div>
+    </div>
+    <div id="sg-d2" class="tab-pane">
+        <div class="day-card"><div class="day-head sg"><div class="day-num">Dag 2 ⭐ Hoogtepunt!</div><div class="day-title">Gardens by the Bay & Marina Bay</div><div class="day-date">Zondag 20 september 2026</div></div><div class="day-body">
+            <div class="act"><div class="act-time">09:00</div><div class="act-line"><div class="act-title">☕ Ya Kun Kaya Toast</div><div class="act-desc">Kaya toast, zachtgekookte eieren & kopi.</div></div></div>
+            <div class="act"><div class="act-time">10:30</div><div class="act-line"><div class="act-title">🌸 Flower Dome</div><div class="act-desc">Grootste glazen kas ter wereld!</div><div class="tip">💡 Combotiket Flower Dome + Cloud Forest (~SGD 53pp)</div></div></div>
+            <div class="act"><div class="act-time">12:00</div><div class="act-line"><div class="act-title">🌫️ Cloud Forest</div><div class="act-desc">35m berg met tropische planten & binnenwaterval.</div></div></div>
+            <div class="act"><div class="act-time">13:30</div><div class="act-line"><div class="act-title">🍽️ Satay by the Bay</div><div class="act-desc">Hawker food met Supertree uitzicht.</div></div></div>
+            <div class="act"><div class="act-time">17:00</div><div class="act-line"><div class="act-title">🍹 Ce La Vi Rooftop (MBS)</div><div class="act-desc">57 verdiepingen hoog – legendarisch uitzicht!</div><div class="tip">💡 Smart casual. Kom voor 19:00!</div></div></div>
+            <div class="act"><div class="act-time">19:45</div><div class="act-line"><div class="act-title">🎆 Garden Rhapsody Lichtshow!</div><div class="act-desc">Supertrees op muziek – magisch! 2e show 20:45.</div><div class="tip">💡 OCBC Skyway (SGD 14pp) of gratis van de grond!</div></div></div>
+            <div class="act"><div class="act-time">21:00</div><div class="act-line"><div class="act-title">🌙 Diner: Clarke Quay</div><div class="act-desc">Romantisch diner aan de rivier.</div></div></div>
+        </div></div>
+    </div>
+    <div id="sg-d3" class="tab-pane">
+        <div class="day-card"><div class="day-head sg"><div class="day-num">Dag 3 – Laatste dag!</div><div class="day-title">Cultuur, Chilli Crab & Vertrek</div><div class="day-date">Maandag 21 september 2026</div></div><div class="day-body">
+            <div class="act"><div class="act-time">08:30</div><div class="act-line"><div class="act-title">🏛️ Chinatown</div><div class="act-desc">Kleurrijke straten, temples & straatvoedsel.</div></div></div>
+            <div class="act"><div class="act-time">10:30</div><div class="act-line"><div class="act-title">🕌 Kampong Glam & Haji Lane</div><div class="act-desc">Sultan Mosque & smalste kleurrijkste straat.</div><div class="tip">💡 Haji Lane = beste boutiques & graffiti!</div></div></div>
+            <div class="act"><div class="act-time">12:30</div><div class="act-line"><div class="act-title">🦀 Chilli Crab bij Jumbo Seafood!</div><div class="act-desc">Reserveer vooraf – ~SGD 60-80 per krab. Absoluut de moeite waard!</div></div></div>
+            <div class="act"><div class="act-time">14:30</div><div class="act-line"><div class="act-title">🏨 Inpakken & Uitchecken</div><div class="act-desc">Bagage bij hotel als vlucht laat is.</div></div></div>
+            <div class="act"><div class="act-time">Avond</div><div class="act-line"><div class="act-title">✈️ Naar Changi Airport</div><div class="act-desc">Minstens 2 uur voor vertrek!</div></div></div>
+        </div></div>
+    </div>
+</div>
+
+<!-- ==================== AUSTRALIA ==================== -->
+<div id="australia" class="section">
+    <div class="sec-head"><h2>🇦🇺 Australië – Maui Campervan Avontuur</h2><div class="divider"></div><p>22 sep – 3 okt • Cairns → Brisbane • ~1.750 km</p></div>
+
+    <div class="banner blue"><div class="ban-icon">🏨</div><div class="ban-body"><h3>Pacific Hotel Cairns ✅</h3><p>Eerste nacht in Australië • Rust na vlucht Singapore • Basis voor campervan ophalen</p><span class="ban-badge">✅ Bevestigd – 21–22 september 2026 (1 nacht)</span></div></div>
+
+    <!-- MAUI CARD -->
+    <div class="maui-card">
+        <h2>🚐 Maui Campervan ✅ Geboekt!</h2>
+        <div class="sub">Jullie huis op wielen voor 11 dagen langs de Australische oostkust!</div>
+        <div class="maui-grid">
+            <div class="maui-item"><div class="mi">📍</div><h4>Ophalen</h4><p>Cairns</p></div>
+            <div class="maui-item"><div class="mi">📅</div><h4>Ophaaldatum</h4><p>22 september</p></div>
+            <div class="maui-item"><div class="mi">📍</div><h4>Inleveren</h4><p>Brisbane</p></div>
+            <div class="maui-item"><div class="mi">📅</div><h4>Inleverdatum</h4><p>3 oktober</p></div>
+            <div class="maui-item"><div class="mi">🗓️</div><h4>Duur</h4><p>11 dagen</p></div>
+            <div class="maui-item"><div class="mi">🛣️</div><h4>Route</h4><p>~1.750 km</p></div>
+            <div class="maui-item"><div class="mi">🏢</div><h4>Verhuurder</h4><p>Maui Motorhomes</p></div>
+            <div class="maui-item"><div class="mi">✅</div><h4>Status</h4><p>Bevestigd!</p></div>
+        </div>
+        <div class="maui-tip">
+            🌟 <strong>Over Maui:</strong> Maui is een premium campervanhuurder – jullie voertuig is volledig uitgerust met comfortabel tweepersoonsbed, volledige keuken, toilet, douche & airco. Neem jullie boekingsbevestiging & rijbewijzen mee bij ophalen. Controleer de camper goed voor vertrek & maak foto's van eventuele schade!
+        </div>
+    </div>
+
+    <!-- ROUTE MAP -->
+    <div class="route-box">
+        <h3 style="color:var(--dark);margin-bottom:5px">🗺️ Campervan Route: Cairns → Brisbane</h3>
+        <p style="color:#888;font-size:0.88em">11 dagen • ~1.750 km • Maui Motorhomes ✅</p>
+        <div class="route-stops">
+            <div class="r-stop"><div class="r-dot ok">🏨</div><div class="r-name">Cairns</div><div class="r-date">21 sep</div><div class="r-status ok">Hotel ✅</div></div>
+            <div class="r-conn"></div>
+            <div class="r-stop"><div class="r-dot ok">🚐</div><div class="r-name">Maui Ophalen</div><div class="r-date">22 sep middag</div><div class="r-status ok">Geboekt ✅</div></div>
+            <div class="r-conn"></div>
+            <div class="r-stop"><div class="r-dot">🌿</div><div class="r-name">Daintree</div><div class="r-date">22-23 sep</div><div class="r-status">2 nachten</div></div>
+            <div class="r-conn"></div>
+            <div class="r-stop"><div class="r-dot">🐠</div><div class="r-name">Reef Tocht</div><div class="r-date">24 sep</div><div class="r-status">1 dag</div></div>
+            <div class="r-conn"></div>
+            <div class="r-stop"><div class="r-dot">🏖️</div><div class="r-name">Mission Beach</div><div class="r-date">25-26 sep</div><div class="r-status">2 nachten</div></div>
+            <div class="r-conn"></div>
+            <div class="r-stop"><div class="r-dot">⛵</div><div class="r-name">Airlie Beach</div><div class="r-date">27-28 sep</div><div class="r-status">2 nachten</div></div>
+            <div class="r-conn"></div>
+            <div class="r-stop"><div class="r-dot">🌊</div><div class="r-name">Noosa</div><div class="r-date">29 sep-1 okt</div><div class="r-status">3 nachten</div></div>
+            <div class="r-conn"></div>
+            <div class="r-stop"><div class="r-dot ok">🏙️</div><div class="r-name">Brisbane</div><div class="r-date">2-3 okt</div><div class="r-status ok">Inleveren ✅</div></div>
+        </div>
+    </div>
+
+    <!-- CAIRNS DAY -->
+    <div class="cat-head">📍 Cairns (22 september)</div>
+    <div class="day-card"><div class="day-head cairns"><div class="day-num">Aankomstdag Australië</div><div class="day-title">Cairns – Aankomst & Inchecken</div><div class="day-date">Maandag 21 september 2026 • Pacific Hotel Cairns ✅</div></div><div class="day-body">
+        <div class="act"><div class="act-time">Middag</div><div class="act-line"><div class="act-title">✈️ Aankomst vanuit Singapore</div><div class="act-desc">Welkom in Australië! Kleine gezellige luchthaven.</div><div class="tip">💡 AU douane is STRENG – declareer alles! Geen voedsel verzwijgen.</div></div></div>
+        <div class="act"><div class="act-time">Middag</div><div class="act-line"><div class="act-title">🏨 Inchecken Pacific Hotel Cairns ✅</div><div class="act-desc">Rust na lange reis. Douchen & bijkomen.</div></div></div>
+        <div class="act"><div class="act-time">16:00</div><div class="act-line"><div class="act-title">🏊 Esplanade Lagoon</div><div class="act-desc">Gratis openbaar zwembad aan de waterkant. Heerlijk afkoelen!</div><div class="tip">💡 Een van de beste gratis zwemplekken van Australië</div></div></div>
+        <div class="act"><div class="act-time">17:30</div><div class="act-line"><div class="act-title">🌅 Night Markets Cairns</div><div class="act-desc">Elke avond open aan de Esplanade. Lokaal eten, souvenirs & sfeer.</div></div></div>
+        <div class="act"><div class="act-time">19:00</div><div class="act-line"><div class="act-title">🍽️ Diner: Dundees Restaurant</div><div class="act-desc">Klassiek Cairns restaurant. Probeer krokodil, barramundi of kangoeroebiefstuk!</div></div></div>
+    </div></div>
+
+    <div class="day-card"><div class="day-head cairns"><div class="day-num">Ophaaldag Camper</div><div class="day-title">Cairns – Maui Campervan Ophalen</div><div class="day-date">Dinsdag 22 september 2026 • Vertrek richting Daintree</div></div><div class="day-body">
+        <div class="act"><div class="act-time">09:00</div><div class="act-line"><div class="act-title">🏨 Uitchecken Pacific Hotel Cairns</div><div class="act-desc">Bagage klaarzetten voor de camper.</div></div></div>
+        <div class="act"><div class="act-time">10:00</div><div class="act-line"><div class="act-title">🚐 Maui Campervan Ophalen!</div><div class="act-desc">Maui verhuurlocatie Cairns. Camper controleren, foto's maken van eventuele schade, alles inrichten. Neem rijbewijzen & boekingsbevestiging mee!</div><div class="tip">💡 Maui tip: Controleer banden, water, gas & stroomvoorziening voor vertrek!</div></div></div>
+        <div class="act"><div class="act-time">12:00</div><div class="act-line"><div class="act-title">🛒 Boodschappen: Coles of Woolworths</div><div class="act-desc">Eerste campervan boodschappen! Ontbijt, koffie, snacks, zonnebrand & dranken voor de reis.</div></div></div>
+        <div class="act"><div class="act-time">Middag</div><div class="act-line"><div class="act-title">🌿 Op weg naar Daintree</div><div class="act-desc">Eerste rit met de camper – op naar het regenwoud!</div></div></div>
+    </div></div>
+
+    <!-- REEF -->
+    <div class="reef-card">
+        <h3>🐠 Great Barrier Reef – Dag Boottocht (24 sep)</h3>
+        <p style="opacity:0.85;margin-top:5px">Een van de zeven wereldwonderen • Beste zichtbaarheid in droog seizoen!</p>
+        <div class="reef-grid">
+            <div class="reef-item"><div class="ri">🚢</div><h4>Sailaway (Port Douglas)</h4><p>Beste catamaran tour. Agincourt Reef – outstanding snorkelen.</p></div>
+            <div class="reef-item"><div class="ri">🤿</div><h4>Snorkelen & Duiken</h4><p>Hele dag, 2-3 rifstoppen. Uitrusting inbegrepen. Intro duiken!</p></div>
+            <div class="reef-item"><div class="ri">⭐</div><h4>Beste Operators</h4><p>Sailaway, Quicksilver, Reef Encounter – Port Douglas of Cairns</p></div>
+            <div class="reef-item"><div class="ri">💡</div><h4>Boek Vooraf!</h4><p>Populair & snel volgeboekt. Sep = beste zichtbaarheid!</p></div>
+        </div>
+    </div>
+
+    <div class="hl-grid">
+        <div class="hl-card"><div class="hl-icon">🌿</div><h4>Mossman Gorge</h4><p>Zwemmen in 's werelds oudste regenwoud. Prachtig!</p><span class="hl-tag">Daintree</span></div>
+        <div class="hl-card"><div class="hl-icon">🏖️</div><h4>Cape Tribulation</h4><p>Waar het regenwoud het rif ontmoet. Overnachten op het strand!</p><span class="hl-tag">Iconisch</span></div>
+        <div class="hl-card"><div class="hl-icon">⛵</div><h4>Whitehaven Beach</h4><p>Australië's mooiste strand – puur silica zand! Dagtocht vanuit Airlie.</p><span class="hl-tag">⭐ Top!</span></div>
+        <div class="hl-card"><div class="hl-icon">🌊</div><h4>Noosa Nationaal Park</h4><p>Koala's in de bomen & dolfijnen in de branding.</p><span class="hl-tag">Noosa</span></div>
+        <div class="hl-card"><div class="hl-icon">⛰️</div><h4>Glass House Mountains</h4><p>Vulkanische pieken – stop op weg naar Brisbane.</p><span class="hl-tag">Scenic Drive</span></div>
+        <div class="hl-card"><div class="hl-icon">🎨</div><h4>Brisbane South Bank</h4><p>GOMA gratis & wereldklasse. Strand midden in de stad!</p><span class="hl-tag">Brisbane</span></div>
+    </div>
+</div>
+
+<!-- ==================== SYDNEY ==================== -->
+<div id="sydney" class="section">
+    <div class="sec-head"><h2>🌉 Sydney – 5 Dagen</h2><div class="divider"></div><p>4–9 oktober • De Grote Finale ✨ • Opera 6 oktober 18:30 🎭</p></div>
+
+    <div class="ticket">
+        <div class="ticket-head">
+            <div class="ticket-venue">Sydney Opera House – Bennelong Point</div>
+            <div class="ticket-title">🎭 Avondvoorstelling</div>
+            <div class="ticket-sub">Sydney Opera House, NSW 2000, Australië</div>
+        </div>
+        <div class="ticket-body">
+            <div class="td"><div class="td-lbl">📅 Datum</div><div class="td-val">6 oktober 2026</div></div>
+            <div class="td"><div class="td-lbl">🕕 Aanvang</div><div class="td-val">18:30 uur</div></div>
+            <div class="td"><div class="td-lbl">📍 Locatie</div><div class="td-val">Opera House</div></div>
+            <div class="td"><div class="td-lbl">🎟️ Status</div><div class="td-val">✅ Geboekt</div></div>
+            <div class="td"><div class="td-lbl">👗 Dresscode</div><div class="td-val">Smart Casual</div></div>
+            <div class="td"><div class="td-lbl">💕 Aanleiding</div><div class="td-val">Huwelijksreis!</div></div>
+        </div>
+        <div class="ticket-foot">🌟 Kom minstens 30 min voor aanvang aan • Tickets uitgeprint + digitaal meenemen • Vertel het personeel dat het jullie huwelijksreis is!</div>
+    </div>
+
+    <div class="sub-tabs">
+        <button class="sub-tab" onclick="tab('syd','syd-ov')">Overzicht</button>
+        <button class="sub-tab" onclick="tab('syd','syd-d1')">Dag 1 – 4 okt</button>
+        <button class="sub-tab" onclick="tab('syd','syd-d2')">Dag 2 – 5 okt</button>
+        <button class="sub-tab" onclick="tab('syd','syd-d3')">Dag 3 – 6 okt 🎭</button>
+        <button class="sub-tab" onclick="tab('syd','syd-d4')">Dag 4 – 7 okt</button>
+        <button class="sub-tab" onclick="tab('syd','syd-d5')">Dag 5 – 8 okt 💕</button>
+    </div>
+
+    <div id="syd-ov" class="tab-pane active">
+        <div class="note note-success">🎭 Opera House tickets geboekt voor 6 oktober 18:30! Kom 30 min eerder voor pre-show drinks bij Opera Bar.</div>
+        <div class="hl-grid">
+            <div class="hl-card op"><div class="hl-icon">🎭</div><h4>Opera House ✅ Geboekt!</h4><p>6 oktober 18:30. Kom vroeg voor Opera Bar drinks. Smart casual verplicht!</p><span class="hl-tag op">✅ 6 okt 18:30</span></div>
+            <div class="hl-card"><div class="hl-icon">🌉</div><h4>Harbour Bridge</h4><p>Gratis oversteken of BridgeClimb voor het ultieme uitzicht!</p><span class="hl-tag">Must Do</span></div>
+            <div class="hl-card"><div class="hl-icon">🏄</div><h4>Bondi Beach</h4><p>Iconisch strand + Bondi-Coogee kustroute (6km). Oktober = perfecte lente!</p><span class="hl-tag">Strand</span></div>
+            <div class="hl-card"><div class="hl-icon">⛵</div><h4>Haven Cruise</h4><p>Opera House & Bridge vanaf het water. Captain Cook Cruises.</p><span class="hl-tag">Romantisch</span></div>
+            <div class="hl-card"><div class="hl-icon">🏔️</div><h4>Blue Mountains</h4><p>Three Sisters, Scenic World. 1,5u per trein. Adembenemend!</p><span class="hl-tag">Dagtrip</span></div>
+            <div class="hl-card"><div class="hl-icon">🍷</div><h4>Afscheidsdiner</h4><p>Quay, Aria of Bennelong (IN Opera House!). Reserveer nú!</p><span class="hl-tag">💕 Laatste avond</span></div>
+        </div>
+    </div>
+
+    <div id="syd-d1" class="tab-pane">
+        <div class="day-card"><div class="day-head syd"><div class="day-num">Dag 1</div><div class="day-title">Aankomst & Iconische Haven</div><div class="day-date">Zondag 4 oktober 2026</div></div><div class="day-body">
+            <div class="act"><div class="act-time">Middag</div><div class="act-line"><div class="act-title">✈️ Aankomst vanuit Brisbane</div><div class="act-desc">Airport Link trein naar centrum (~15 min). Inchecken hotel.</div><div class="tip">💡 Verblijf bij Circular Quay / The Rocks – dichtbij alles!</div></div></div>
+            <div class="act"><div class="act-time">14:00</div><div class="act-line"><div class="act-title">🎭 Sydney Opera House verkennen</div><div class="act-desc">Loop rond het iconische gebouw. Jullie komen hier terug op dag 3!</div></div></div>
+            <div class="act"><div class="act-time">16:00</div><div class="act-line"><div class="act-title">🍺 Opera Bar</div><div class="act-desc">Koude drankjes met het beste uitzicht ter wereld!</div></div></div>
+            <div class="act"><div class="act-time">18:30</div><div class="act-line"><div class="act-title">🌅 Wandeling Harbour Bridge</div><div class="act-desc">Gratis oversteken – geweldig zonsondergang uitzicht!</div></div></div>
+            <div class="act"><div class="act-time">20:00</div><div class="act-line"><div class="act-title">🍽️ Diner: The Rocks</div><div class="act-desc">Sydney's oudste wijk. Quay of Aria aanbevolen.</div></div></div>
+        </div></div>
+    </div>
+
+    <div id="syd-d2" class="tab-pane">
+        <div class="day-card"><div class="day-head syd"><div class="day-num">Dag 2</div><div class="day-title">Bondi & Kustroute</div><div class="day-date">Maandag 5 oktober 2026</div></div><div class="day-body">
+            <div class="act"><div class="act-time">08:30</div><div class="act-line"><div class="act-title">☕ Ontbijt: Bills Bondi</div><div class="act-desc">Beroemde Sydneybrunchtent. Ricotta hotcakes zijn legendarisch!</div></div></div>
+            <div class="act"><div class="act-time">10:00</div><div class="act-line"><div class="act-title">🏖️ Bondi Beach</div><div class="act-desc">Zwemmen, surfers kijken, promenade. Oktober: ~21°C water!</div><div class="tip">💡 Zwem altijd tussen de rood-gele lifeguard vlaggen</div></div></div>
+            <div class="act"><div class="act-time">12:00</div><div class="act-line"><div class="act-title">🚶 Bondi–Coogee Kustroute (6km)</div><div class="act-desc">Klifjpad langs prachtige rotspools & stranden. ~2,5 uur.</div><div class="tip">💡 Stop bij Icebergs Pool voor koffie & uitzicht halfweg!</div></div></div>
+            <div class="act"><div class="act-time">19:30</div><div class="act-line"><div class="act-title">🍽️ Diner: Surry Hills</div><div class="act-desc">Sydney's hipste eetbuurt. Chin Chin of Ester.</div></div></div>
+        </div></div>
+    </div>
+
+    <div id="syd-d3" class="tab-pane">
+        <div class="day-card"><div class="day-head opera"><div class="day-num">Dag 3 ⭐ OPERA NIGHT!</div><div class="day-title">🎭 Sydney Opera House Avond</div><div class="day-date">Dinsdag 6 oktober 2026 • Aanvang 18:30 uur</div></div><div class="day-body">
+            <div class="act"><div class="act-time">09:30</div><div class="act-line"><div class="act-title">🌿 Royal Botanic Gardens</div><div class="act-desc">Gratis. Prachtige lentebloesems in oktober. Mrs Macquaries Chair voor het beste Opera House + Bridge panorama!</div></div></div>
+            <div class="act"><div class="act-time">11:30</div><div class="act-line"><div class="act-title">🖼️ Art Gallery of NSW</div><div class="act-desc">Gratis toegang permanente collectie. Uitstekende Aboriginal kunst.</div></div></div>
+            <div class="act"><div class="act-time">13:30</div><div class="act-line"><div class="act-title">🍽️ Lunch: Circular Quay</div><div class="act-desc">Ontspannen lunch aan het water met Opera House & Bridge uitzicht.</div></div></div>
+            <div class="act"><div class="act-time">15:00</div><div class="act-line"><div class="act-title">💆 Hotel – Uitrusten & Aankleden</div><div class="act-desc">Douchen & je mooi aankleden voor de avond!</div><div class="tip">💡 Smart casual verplicht – nette broek/jurk. Geen shorts of slippers!</div></div></div>
+            <div class="act"><div class="act-time">17:45</div><div class="act-line op"><div class="act-title op">🥂 Pre-show: Opera Bar</div><div class="act-desc">45 min voor aanvang! Champagne met havenzicht. Het meest romantische aperitief ter wereld!</div><div class="tip purple">💡 Vertel het Opera Bar personeel dat het jullie huwelijksreis is!</div></div></div>
+            <div class="act"><div class="act-time">18:15</div><div class="act-line op"><div class="act-title op">🎭 AANKOMST OPERA HOUSE</div><div class="act-desc">15 min voor aanvang bij de ingang. Tickets scannen. Geniet van de prachtige binnenarchitectuur!</div><div class="tip purple">💡 Tickets op telefoon + uitgeprint meenemen!</div></div></div>
+            <div class="act"><div class="act-time">18:30</div><div class="act-line op"><div class="act-title op">🌟 AANVANG VOORSTELLING!</div><div class="act-desc">Wereldklasse voorstelling in een van de mooiste zalen ter wereld. Onvergetelijk huwelijksreis moment!</div></div></div>
+            <div class="act"><div class="act-time">Na afloop</div><div class="act-line op"><div class="act-title op">🌉 Nachtelijke Haven Wandeling</div><div class="act-desc">Opera House & Bridge verlicht 's avonds – magisch! De perfecte afsluiting van een onvergetelijke avond.</div></div></div>
+        </div></div>
+    </div>
+
+    <div id="syd-d4" class="tab-pane">
+        <div class="day-card"><div class="day-head syd"><div class="day-num">Dag 4</div><div class="day-title">Blue Mountains Dagtrip</div><div class="day-date">Woensdag 7 oktober 2026</div></div><div class="day-body">
+            <div class="act"><div class="act-time">07:30</div><div class="act-line"><div class="act-title">🚂 Trein naar Katoomba</div><div class="act-desc">2 uur • ~AUD $8,50pp (Opal card) • Landschappelijk!</div><div class="tip">💡 Vertrek vroeg voor een volle dag</div></div></div>
+            <div class="act"><div class="act-time">09:45</div><div class="act-line"><div class="act-title">🏔️ Echo Point & The Three Sisters</div><div class="act-desc">Iconische rotsformatie. Wandel de Giant Stairway!</div></div></div>
+            <div class="act"><div class="act-time">11:00</div><div class="act-line"><div class="act-title">🎢 Scenic World</div><div class="act-desc">Steilste spoorweg ter wereld + kabelbaan + boardwalk. Dagpas ~AUD $60pp.</div></div></div>
+            <div class="act"><div class="act-time">13:30</div><div class="act-line"><div class="act-title">☕ Lunch Katoomba</div><div class="act-desc">Hominy Bakery (beroemde pies!) of Silk's Brasserie.</div></div></div>
+            <div class="act"><div class="act-time">17:00</div><div class="act-line"><div class="act-title">🚂 Terug naar Sydney</div><div class="act-desc">Aankomst ~19:00. Rustige avond.</div></div></div>
+        </div></div>
+    </div>
+
+    <div id="syd-d5" class="tab-pane">
+        <div class="day-card"><div class="day-head syd"><div class="day-num">Dag 5 – Laatste Dag 💕</div><div class="day-title">Manly & Romantisch Afscheidsdiner</div><div class="day-date">Donderdag 8 oktober 2026</div></div><div class="day-body">
+            <div class="act"><div class="act-time">09:00</div><div class="act-line"><div class="act-title">⛴️ Veerboot naar Manly</div><div class="act-desc">30-min veerboottocht IS zelf een attractie – Opera House & Bridge uitzicht!</div></div></div>
+            <div class="act"><div class="act-time">11:30</div><div class="act-line"><div class="act-title">🌊 Shelly Beach Snorkelen</div><div class="act-desc">5 min van Manly. Kristalhelder water, veel vis. Gratis!</div></div></div>
+            <div class="act"><div class="act-time">13:30</div><div class="act-line"><div class="act-title">🍦 Lunch & IJsjes Manly</div><div class="act-desc">Fish & chips op het strand of lunch aan de boulevard.</div></div></div>
+            <div class="act"><div class="act-time">15:30</div><div class="act-line"><div class="act-title">🛍️ QVB Winkelpaleis</div><div class="act-desc">Prachtig Victoriaans gebouw. Laatste souvenirs!</div></div></div>
+            <div class="act"><div class="act-time">19:00</div><div class="act-line op"><div class="act-title op">🌹 Romantisch Afscheidsdiner</div><div class="act-desc">Quay (Opera House view), Aria (Bridge view) of Bennelong IN het Opera House! Reserveer maanden vooruit.</div><div class="tip purple">💡 Dit is jullie laatste huwelijksreis avond – verwennen jullie zelf! 🥂</div></div></div>
+            <div class="act"><div class="act-time">21:30</div><div class="act-line op"><div class="act-title op">💕 Laatste Haven Wandeling</div><div class="act-desc">Bridge & Opera House verlicht 's nachts – jullie laatste huwelijksreis herinnering!</div></div></div>
+        </div></div>
+    </div>
+</div>
+
+<!-- ==================== VERBLIJF ==================== -->
+<div id="verblijf" class="section">
+    <div class="sec-head"><h2>🏨 Verblijf Overzicht</h2><div class="divider"></div><p>Geboekte verblijven & aanbevelingen</p></div>
+    <div class="note note-success">✅ <strong>Geboekt:</strong> QT Hotel Singapore • Pacific Hotel Cairns • Maui Campervan (22 sep–3 okt) • Sydney Opera House tickets<br>⚠️ <strong>Nog te boeken:</strong> Sydney hotel (4–9 oktober)</div>
+    <div class="hotel-grid" style="margin-top:20px">
+        <div class="h-card"><div class="h-img sg-bg">🏨<span class="h-ribbon">✅ Geboekt</span></div><div class="h-info"><h3>QT Hotel Singapore</h3><div class="h-loc">📍 Singapore City Centre</div><div class="h-stars">⭐⭐⭐⭐⭐</div><div class="h-desc">Boutique luxehotel met eclectisch design. Loopafstand van Gardens by the Bay & Marina Bay.</div><div class="h-status" style="color:green">✅ Bevestigd – 19–21 september (2 nachten)</div><div class="h-feats"><span class="feat">🏊 Pool</span><span class="feat">🍽️ Restaurant</span><span class="feat">📍 Centraal</span></div></div></div>
+        <div class="h-card"><div class="h-img cairns-bg">🌴<span class="h-ribbon">✅ Geboekt</span></div><div class="h-info"><h3>Pacific Hotel Cairns</h3><div class="h-loc">📍 Cairns, Queensland</div><div class="h-stars">⭐⭐⭐⭐</div><div class="h-desc">Eerste nacht in Australië! Perfecte rust na vlucht Singapore, basis voor Maui ophalen de volgende dag.</div><div class="h-status" style="color:green">✅ Bevestigd – 21–22 september (1 nacht)</div><div class="h-feats"><span class="feat">🏊 Pool</span><span class="feat">🌴 Tropisch</span><span class="feat">🚐 Maui ophalen dag 2</span></div></div></div>
+        <div class="h-card"><div class="h-img maui-bg">🚐<span class="h-ribbon">✅ Geboekt</span></div><div class="h-info"><h3>Maui Campervan 🚐</h3><div class="h-loc">📍 Cairns → Brisbane (1.750 km)</div><div class="h-stars">⭐⭐⭐⭐⭐</div><div class="h-desc">Jullie huis op wielen! Maui premium campervan volledig uitgerust met bed, keuken, toilet, douche & airco.</div><div class="h-status" style="color:green">✅ Bevestigd – 22 september t/m 3 oktober (11 dagen)</div><div class="h-feats"><span class="feat">🛏️ Comfortabel bed</span><span class="feat">🍳 Keuken</span><span class="feat">🚿 Douche</span><span class="feat">❄️ Airco</span></div></div></div>
+        <div class="h-card"><div class="h-img syd-bg">🌉</div><div class="h-info"><h3>Sydney Hotel – Kies hieronder →</h3><div class="h-loc">📍 Circular Quay / The Rocks aanbevolen</div><div class="h-stars">⭐⭐⭐⭐⭐</div><div class="h-desc">Huwelijksreis finale! Kies een hotel dicht bij het Opera House voor dag 3 (6 oktober 18:30). Zie Sydney Hotels tab.</div><div class="h-status" style="color:orange">⚠️ Nog te boeken – 4–9 oktober (5 nachten)</div><div class="h-feats"><span class="feat">🌉 Havenview</span><span class="feat">💕 Huwelijksreis</span><span class="feat">🎭 Nabij Opera</span></div></div></div>
+    </div>
+    <div class="note note-info" style="margin-top:18px">💡 <strong>Opera tip:</strong> Kies een hotel binnen loopafstand van het Opera House voor 6 oktober. Park Hyatt (2 min lopen!) of Pier One (8 min) zijn ideaal.</div>
+</div>
+
+<!-- ==================== SYDNEY HOTELS ==================== -->
+<div id="sydney-hotels" class="section">
+    <div class="sec-head"><h2>🌉 Sydney Hotel Aanbevelingen</h2><div class="divider"></div><p>5 nachten (4–9 oktober) • Opera 6 okt 18:30 – kies hotel dichtbij!</p></div>
+    <div class="note note-warn">🎭 Jullie hebben Opera tickets voor 6 oktober 18:30 – kies een hotel op loopafstand van Circular Quay voor maximaal gemak!</div>
+
+    <div class="cat-head">👑 Luxe (€400–€700/nacht)</div>
+    <div class="sh-grid">
+        <div class="sh-card rec"><div class="sh-banner lux">🏆<span class="sh-ribbon">⭐ Top + Opera</span></div><div class="sh-body"><div class="sh-name">Park Hyatt Sydney</div><div class="sh-area">📍 The Rocks – 2 min lopen naar Opera House</div><div class="stars">⭐⭐⭐⭐⭐</div><div class="sh-price">€550–€700 <span>per nacht</span></div><div class="sh-total">~€2.750–€3.500 totaal</div><ul class="sh-pros"><li>Opera House view vanuit ELKE kamer</li><li>Letterlijk 2 minuten lopen naar Opera House</li><li>Rooftop pool met spectaculair panorama</li><li>Wereldberoemde huwelijksreis ervaring</li></ul><div class="sh-tags"><span class="htag view">🌉 Opera View</span><span class="htag honey">💕 Huwelijksreis</span></div><button class="book-btn" onclick="window.open('https://www.hyatt.com','_blank')">Bekijk op Hyatt.com →</button></div></div>
+        <div class="sh-card"><div class="sh-banner lux">🏛️</div><div class="sh-body"><div class="sh-name">The Langham Sydney</div><div class="sh-area">📍 The Rocks – 10 min Opera</div><div class="stars">⭐⭐⭐⭐⭐</div><div class="sh-price">€400–€550 <span>per nacht</span></div><div class="sh-total">~€2.000–€2.750 totaal</div><ul class="sh-pros"><li>Iconisch historisch gebouw The Rocks</li><li>Beroemde Chuan Spa voor huwelijksreis</li><li>Prachtige rooftop pool</li></ul><div class="sh-tags"><span class="htag honey">💕 Spa</span><span class="htag view">📍 The Rocks</span></div><button class="book-btn" onclick="window.open('https://www.langhamhotels.com','_blank')">Bekijk op Langham →</button></div></div>
+    </div>
+
+    <div class="cat-head">🌟 Premium (€200–€400/nacht)</div>
+    <div class="sh-grid">
+        <div class="sh-card rec"><div class="sh-banner prem">⚓<span class="sh-ribbon">💕 Romantisch</span></div><div class="sh-body"><div class="sh-name">Pier One Sydney Harbour</div><div class="sh-area">📍 Walsh Bay – 8 min Opera</div><div class="stars">⭐⭐⭐⭐⭐</div><div class="sh-price">€280–€420 <span>per nacht</span></div><div class="sh-total">~€1.400–€2.100 totaal</div><ul class="sh-pros"><li>Hotel gebouwd ÓP de pier – omgeven door water</li><li>Uniek romantische sfeer</li><li>8 min lopen naar Opera House</li></ul><div class="sh-tags"><span class="htag view">⚓ Op het water</span><span class="htag honey">💕 Romantisch</span><span class="htag val">💚 Goede waarde</span></div><button class="book-btn" onclick="window.open('https://www.ihg.com','_blank')">Bekijk op IHG →</button></div></div>
+        <div class="sh-card"><div class="sh-banner prem">🌊</div><div class="sh-body"><div class="sh-name">Ovolo Woolloomooloo</div><div class="sh-area">📍 Woolloomooloo – 10 min Opera</div><div class="stars">⭐⭐⭐⭐⭐</div><div class="sh-price">€240–€360 <span>per nacht</span></div><div class="sh-total">~€1.200–€1.800 totaal</div><ul class="sh-pros"><li>Ontbijt & happy hour INBEGREPEN</li><li>Historisch pakhuis – geweldige sfeer</li><li>Topbeoordeeld door koppels</li></ul><div class="sh-tags"><span class="htag val">💚 All-inclusive</span><span class="htag honey">💕 Boutique</span></div><button class="book-btn" onclick="window.open('https://www.ovolohotels.com','_blank')">Bekijk op Ovolo →</button></div></div>
+        <div class="sh-card"><div class="sh-banner bout">🎨</div><div class="sh-body"><div class="sh-name">QT Sydney</div><div class="sh-area">📍 CBD – 15 min Opera (taxi 5 min)</div><div class="stars">⭐⭐⭐⭐⭐</div><div class="sh-price">€180–€280 <span>per nacht</span></div><div class="sh-total">~€900–€1.400 totaal</div><ul class="sh-pros"><li>Zelfde keten als jullie Singapore hotel!</li><li>Fantastisch eclectisch design</li><li>Uitstekend restaurant & rooftop bar</li></ul><div class="sh-tags"><span class="htag honey">💕 Zoals Singapore!</span><span class="htag view">📍 Centraal</span></div><button class="book-btn" onclick="window.open('https://www.qthotels.com','_blank')">Bekijk op QT Hotels →</button></div></div>
+    </div>
+
+    <div class="cat-head">💰 Midden (€120–€220/nacht)</div>
+    <div class="sh-grid">
+        <div class="sh-card rec"><div class="sh-banner mid">🎯<span class="sh-ribbon">💚 Beste waarde</span></div><div class="sh-body"><div class="sh-name">Adina Apartment Hotel Harbourside</div><div class="sh-area">📍 Darling Harbour – 20 min Opera</div><div class="stars">⭐⭐⭐⭐</div><div class="sh-price">€150–€220 <span>per nacht</span></div><div class="sh-total">~€750–€1.100 totaal</div><ul class="sh-pros"><li>Eigen keuken – bespaart na campervan!</li><li>Ruime kamers & zwembad</li><li>Waterfront Darling Harbour</li></ul><div class="sh-tags"><span class="htag val">💚 Beste waarde</span><span class="htag view">📍 Darling Harbour</span></div><button class="book-btn" onclick="window.open('https://www.adinahotels.com','_blank')">Bekijk op Adina →</button></div></div>
+        <div class="sh-card"><div class="sh-banner mid">🌿</div><div class="sh-body"><div class="sh-name">Hotel Palisade</div><div class="sh-area">📍 Millers Point, The Rocks – 10 min Opera</div><div class="stars">⭐⭐⭐⭐</div><div class="sh-price">€140–€200 <span>per nacht</span></div><div class="sh-total">~€700–€1.000 totaal</div><ul class="sh-pros"><li>Historisch gebouw 1912 met karakter</li><li>Spectaculair Harbour Bridge uitzicht</li><li>Slechts 9 kamers – intiem & persoonlijk</li></ul><div class="sh-tags"><span class="htag honey">💕 Intiem</span><span class="htag view">🌉 Bridge View</span></div><button class="book-btn" onclick="window.open('https://www.booking.com','_blank')">Bekijk beschikbaarheid →</button></div></div>
+    </div>
+    <div class="note note-success" style="margin-top:20px">💕 <strong>Aanbeveling:</strong> Park Hyatt (2 min Opera!) of Pier One (romantisch & betaalbaar). Vermeld altijd bij boeking dat het jullie huwelijksreis is!</div>
+</div>
+
+<!-- ==================== PAKLIJST ==================== -->
+<div id="paklijst" class="section">
+    <div class="sec-head"><h2>🎒 Paklijst</h2><div class="divider"></div><p>Klik op een item om het af te vinken</p></div>
+    <div class="sub-tabs">
+        <button class="sub-tab" onclick="tab('pak','pak-kleding')">👗 Kleding</button>
+        <button class="sub-tab" onclick="tab('pak','pak-toilet')">🧴 Toiletspullen</button>
+        <button class="sub-tab" onclick="tab('pak','pak-ehbo')">🏥 EHBO & Gezondheid</button>
+        <button class="sub-tab" onclick="tab('pak','pak-camper')">🚐 Maui Camper</button>
+        <button class="sub-tab" onclick="tab('pak','pak-docs')">📄 Docs & Tech</button>
+    </div>
+
+    <div id="pak-kleding" class="tab-pane active">
+        <div class="pack-counter" id="cnt-kleding">0 / 0 ingepakt</div>
+        <div class="pack-grid">
+            <div class="pack-cat"><h4>👕 Bovenkleding</h4>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Lichte T-shirts / linnen shirts<span class="pack-note">x6–8 per persoon – het is WARM!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Sportieve tops / tanktops<span class="pack-note">x4 per persoon</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">🎭 Smart casual outfit voor Opera<span class="pack-note">Jurk/rok of nette broek met blouse – 6 oktober!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">1x Nette blouse / overhemd<span class="pack-note">Voor restaurants & avondjes uit</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Lichte vest / cardigan<span class="pack-note">Airco & Sydney avonden (~20°C)</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Compacte regenjas / windbreaker<span class="pack-note">Singapore heeft regelmatig buien</span></span></div>
+            </div>
+            <div class="pack-cat"><h4>👖 Broeken & Onderkleding</h4>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Lichte broeken / chino's x2–3</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Korte broeken / shorts x3–4</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Jurken / rokken (dame) x2<span class="pack-note">Één ook Opera-geschikt!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Ondergoed x8–10 per persoon<span class="pack-note">Sneldrogend materiaal!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Sokken x5–6 paar</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Pyjama / slaapkleding</span></div>
+            </div>
+            <div class="pack-cat"><h4>👟 Schoenen</h4>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Comfortabele wandelschoenen<span class="pack-note">Blue Mountains, Bondi–Coogee, Daintree</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Slippers / flip flops<span class="pack-note">Strand, camping & casual</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">🎭 Nette schoenen voor Opera<span class="pack-note">Smart casual – geen sportschoenen!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Waterschoenen (optioneel)<span class="pack-note">Handig voor rif & rotspools</span></span></div>
+            </div>
+            <div class="pack-cat"><h4>🏊 Zwemkleding & Zon</h4>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Zwembroek / bikini x2<span class="pack-note">Één dragen, één drogen!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Rash guard / zwemshirt<span class="pack-note">UV bescherming op het rif!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Zonnebril UV400<span class="pack-note">Australische zon is extreem!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Zonnehoed / cap</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'kleding')"><div class="pack-cb"></div><span class="pack-lbl">Sneldrogende strandhanddoeken x2</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pak-toilet" class="tab-pane">
+        <div class="pack-counter" id="cnt-toilet">0 / 0 ingepakt</div>
+        <div class="pack-grid">
+            <div class="pack-cat"><h4>🧴 Huid & Zon</h4>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Zonnebrandcrème SPF 50+ (veel!)<span class="pack-note">Minstens 3 grote tubes</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Rifsafe zonnebrand SPF 50+<span class="pack-note">VERPLICHT op Great Barrier Reef!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">After-sun lotion (groot)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Lippenbalsem met UV bescherming</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Deodorant x2</span></div>
+            </div>
+            <div class="pack-cat"><h4>💆 Haar & Gezicht</h4>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Shampoo & conditioner</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Gezichtsreiniger & moisturizer</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Haarborstel / kam</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Scheerspullen</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">🎭 Make-up voor Opera avond<span class="pack-note">Waterproof mascara & foundation</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Make-up remover doekjes</span></div>
+            </div>
+            <div class="pack-cat"><h4>🦷 Overig</h4>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Tandenborstel & tandpasta</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Floss / tandenstokers</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Nagelvijl & nagelknipper</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Waspoeder reisformaat</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Menstruatieproducten (indien nodig)</span></div>
+            </div>
+            <div class="pack-cat"><h4>🐝 DEET & Muggen</h4>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">DEET spray 40–50% (Jungle Formula)<span class="pack-note">ESSENTIEEL voor Singapore & Daintree!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">DEET lotion (voor gevoelige huid)<span class="pack-note">Mildere variant voor gezicht & nek</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Permethrine kledinspray</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'toilet')"><div class="pack-cb"></div><span class="pack-lbl">Hydrocortisone crème (beten)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pak-ehbo" class="tab-pane">
+        <div class="pack-counter" id="cnt-ehbo">0 / 0 ingepakt</div>
+        <div class="note note-danger">⚕️ Raadpleeg huisarts minimaal 6–8 weken voor vertrek voor vaccinaties & reisadvies!</div>
+        <div class="pack-grid">
+            <div class="pack-cat"><h4>💊 Medicijnen</h4>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Persoonlijke medicatie + reserve<span class="pack-note">Altijd in handbagage!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Paracetamol / ibuprofen</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Imodium (reizigersdiarree)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Reisziekte tabletten/pleisters<span class="pack-note">ESSENTIEEL voor Reef boottocht!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">ORS / rehydratiepoeder</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Antihistamine tabletten</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Melatonine (jetlag)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Compressiesokken (lange vluchten)</span></div>
+            </div>
+            <div class="pack-cat"><h4>🩹 EHBO</h4>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Pleisters (diverse maten)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Wonddesinfectant (Betadine)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Steriel gaas & zwachtel</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Pincet</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Thermometer</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Oogdruppels (kunsttranen)</span></div>
+            </div>
+            <div class="pack-cat"><h4>💉 Vaccinaties Check</h4>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Afspraak reisarts gemaakt</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Hepatitis A vaccin</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Hepatitis B vaccin</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">DTP / Tetanus update</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Malariaprofylaxe bespreken (Daintree)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'ehbo')"><div class="pack-cb"></div><span class="pack-lbl">Vaccinatiebewijs meenemen</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pak-camper" class="tab-pane">
+        <div class="pack-counter" id="cnt-camper">0 / 0 ingepakt</div>
+        <div class="note note-info">🚐 <strong>Maui campervan</strong> is volledig uitgerust met kookgerei, beddengoed & handdoeken. Controleer je boekingsbevestiging voor exacte inhoud!</div>
+        <div class="pack-grid">
+            <div class="pack-cat"><h4>🍳 Keuken & Eten</h4>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Herbruikbare boodschappentassen<span class="pack-note">Plastic verboden in Australië!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Herbruikbare waterflessen x2</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Korkentrekker & flesopener</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Afwasmiddel (klein flesje)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Keukenrol & vuilniszakken</span></div>
+            </div>
+            <div class="pack-cat"><h4>🏕️ Camping Comfort</h4>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Opvouwbare kampingstoelen x2</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Hoofdlampje / zaklamp</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Kaarsjes / solar lichtjes 🌙</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Insectenwerende spiraaltjes</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Touwlijn + wasknijpers<span class="pack-note">Natte zwemkleding drogen – elke dag nodig!</span></span></div>
+            </div>
+            <div class="pack-cat"><h4>🤿 Water & Sport</h4>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Snorkelmasker & snorkel<span class="pack-note">Eigen masker zit veel beter dan gehuurd!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Droge tas / drybag</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Waterdicht telefoonhoesje</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">GoPro + houders + batterijen<span class="pack-note">Onmisbaar voor het rif!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Dagrugzak (20-25L)</span></div>
+            </div>
+            <div class="pack-cat"><h4>🔧 Maui Praktisch</h4>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Maui boekingsbevestiging + rijbewijzen<span class="pack-note">Verplicht bij ophalen!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">WikiCamps AU app gedownload</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Google Maps offline (QLD + NSW)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Telstra SIM / eSIM<span class="pack-note">Beste netwerk in afgelegen gebieden</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Powerbank (groot, 20.000mAh)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">AU adapter (type I – 3 scheve pennen)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'camper')"><div class="pack-cb"></div><span class="pack-lbl">Bluetooth speaker 🎵</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pak-docs" class="tab-pane">
+        <div class="pack-counter" id="cnt-docs">0 / 0 ingepakt</div>
+        <div class="pack-grid">
+            <div class="pack-cat"><h4>📄 Documenten (HANDBAGAGE!)</h4>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Paspoorten (geldig tot min. apr 2026)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Australisch ETA visum (digitaal)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Alle vluchtenbewijzen (uitgeprint)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">🎭 Opera House tickets (uitgeprint + digitaal!)<span class="pack-note">6 oktober 18:30 – NIET vergeten!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Hotel bevestigingen (QT SG + Cairns)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">🚐 Maui campervan boekingsbevestiging<span class="pack-note">Verplicht bij ophalen Cairns!</span></span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Rijbewijs (NL, geldig)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Reisverzekering (met 24/7 noodnummer)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Creditcard + bankpas + Wise/Revolut</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Noodcontanten AUD $200 + SGD $100</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Vaccinatiebewijs</span></div>
+            </div>
+            <div class="pack-cat"><h4>📱 Tech & Elektronica</h4>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Smartphones (volledig geladen)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Reisadapter AU (type I) + SG (type G)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Powerbank (20.000 mAh)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Laadkabels (reservekabels!)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Camera + geheugenkaarten (2x 64GB)</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">GoPro + houders + batterijen</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">Noise-cancelling koptelefoon</span></div>
+                <div class="pack-item" onclick="pkToggle(this,'docs')"><div class="pack-cb"></div><span class="pack-lbl">E-reader met boeken</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== VOORBEREIDING ==================== -->
+<div id="voorbereiding" class="section">
+    <div class="sec-head"><h2>📋 Voorbereiding</h2><div class="divider"></div><p>Alles wat jullie vóór vertrek moeten regelen</p></div>
+    <div class="note note-success">✅ <strong>Al geregeld:</strong> KLM + SIA + VNA vluchten • QT Hotel SG • Pacific Hotel Cairns • Maui Campervan (22 sep–3 okt) • Sydney Opera House (6 okt 18:30)</div>
+    <div class="note note-danger">🚨 <strong>Urgent nog te doen:</strong> BNE→SYD vlucht • Sydney hotel • Australisch ETA visum</div>
+
+    <div class="sub-tabs">
+        <button class="sub-tab" onclick="tab('prep','prep-urg')">🚨 Urgent</button>
+        <button class="sub-tab" onclick="tab('prep','prep-docs')">📄 Documenten</button>
+        <button class="sub-tab" onclick="tab('prep','prep-health')">💉 Gezondheid</button>
+        <button class="sub-tab" onclick="tab('prep','prep-book')">🎫 Boekingen</button>
+        <button class="sub-tab" onclick="tab('prep','prep-fin')">💰 Financieel</button>
+    </div>
+
+    <div id="prep-urg" class="tab-pane active">
+        <div class="prep-grid">
+            <div class="prep-card"><div class="prep-head urg"><div class="prep-icon">✈️</div><div><h3>BNE → SYD Vlucht</h3><p>Nog niet geboekt – meteen doen!</p></div></div><div class="prep-body"><span class="dl dl-now">⚠️ Direct</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Vlucht BNE→SYD boeken (4 okt 2026)<span class="cl-sub">qantas.com of jetstar.com – ~€80–€150pp</span></span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head urg"><div class="prep-icon">🏨</div><div><h3>Sydney Hotel</h3><p>Dicht bij Opera House voor 6 oktober!</p></div></div><div class="prep-body"><span class="dl dl-now">⚠️ Zo snel mogelijk</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Sydney hotel kiezen & boeken (4–9 okt, 5 nachten)<span class="cl-sub">Zie Sydney Hotels tab – kies nabij Opera House!</span></span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Honeymoon + Opera avond (6 okt) vermelden bij boeking</span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head urg"><div class="prep-icon">🇦🇺</div><div><h3>Australisch ETA Visum</h3><p>Verplicht voor Nederlanders!</p></div></div><div class="prep-body"><span class="dl dl-now">⚠️ Direct aanvragen</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">ETA aanvragen via AUS ETA app (beide personen)<span class="cl-sub">AUD $20pp (~€12). Verwerking minuten tot 24u</span></span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">ETA bevestiging opslaan (gekoppeld aan paspoort)</span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head nor"><div class="prep-icon">🚐</div><div><h3>Maui Campervan ✅</h3><p>Geboekt! Nog tips voor ophalen.</p></div></div><div class="prep-body"><span class="dl dl-ok">✅ Geboekt</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item done" onclick="clToggle(this)"><div class="cl-box-chk">✓</div><span class="cl-txt">Maui campervan geboekt ✅<span class="cl-sub">Ophalen Cairns 22 sep, inleveren Brisbane 3 okt</span></span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Boekingsbevestiging & rijbewijzen bij de hand houden<span class="cl-sub">Verplicht bij ophalen Cairns!</span></span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Maui ophaallocatie Cairns opzoeken<span class="cl-sub">Controleer exacte adres & openingstijden</span></span></div></div></div></div>
+        </div>
+    </div>
+
+    <div id="prep-docs" class="tab-pane">
+        <div class="note note-success">🎭 Opera tickets geboekt! Bewaar veilig – digitaal + uitgeprint. Aanvang 6 oktober 18:30.</div>
+        <div class="prep-grid">
+            <div class="prep-card"><div class="prep-head imp"><div class="prep-icon">🛂</div><div><h3>Paspoorten</h3><p>Geldigheid & namen checken</p></div></div><div class="prep-body"><span class="dl dl-soon">📅 Controleer nu</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Paspoort 1 geldig tot minimaal april 2026</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Paspoort 2 geldig tot minimaal april 2026</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Naam paspoort = naam vliegticket</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Digitale kopie opslaan in cloud</span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head inf"><div class="prep-icon">🎭</div><div><h3>Opera Tickets ✅</h3><p>6 oktober 18:30 – bevestigd!</p></div></div><div class="prep-body"><span class="dl dl-ok">✅ Geboekt</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item done" onclick="clToggle(this)"><div class="cl-box-chk">✓</div><span class="cl-txt">Opera tickets geboekt ✅</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Tickets uitprinten als backup</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Smart casual outfit klaarleggen<span class="cl-sub">Shorts & slippers NIET toegestaan</span></span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Opera Bar reservering voor aanvang (17:45)</span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head nor"><div class="prep-icon">🚗</div><div><h3>Rijbewijzen (Maui)</h3><p>NL rijbewijs geldig in AU!</p></div></div><div class="prep-body"><span class="dl dl-ok">✅ Controleer</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">NL rijbewijs geldig (categorie B)<span class="cl-sub">NL rijbewijs is geldig in Australië!</span></span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Internationaal rijbewijs (optioneel, ANWB ~€15)<span class="cl-sub">Handig als extra backup bij Maui</span></span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head inf"><div class="prep-icon">🌐</div><div><h3>Visa & Inreisregels</h3><p>Singapore & Australië</p></div></div><div class="prep-body"><span class="dl dl-now">⚠️ ETA nu!</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Singapore: visumvrij voor NL (max 30 dagen)</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Australische ETA aangevraagd (x2)</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Vietnamese transit controleren (Hanoi)</span></div></div></div></div>
+        </div>
+    </div>
+
+    <div id="prep-health" class="tab-pane">
+        <div class="note note-danger">💉 Plan reisarts afspraak uiterlijk eind juli 2026!</div>
+        <div class="prep-grid">
+            <div class="prep-card"><div class="prep-head urg"><div class="prep-icon">💉</div><div><h3>Vaccinaties</h3><p>Maak afspraak reisarts!</p></div></div><div class="prep-body"><span class="dl dl-now">⚠️ Voor eind juli</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Afspraak reisarts / GGD gemaakt</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Hepatitis A vaccin (~€50pp)</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Hepatitis B vaccin</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">DTP / Tetanus update</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Malariaprofylaxe bespreken (Daintree)</span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head imp"><div class="prep-icon">🏥</div><div><h3>Reisverzekering</h3><p>Inclusief campervan & snorkelen!</p></div></div><div class="prep-body"><span class="dl dl-now">⚠️ Direct regelen</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Werelddekking inclusief Australië</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Medische kosten min. €1 miljoen</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Snorkelen / duiken / avonturensport gedekt</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Campervan (Maui) schade gedekt</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Annuleringsverzekering</span></div></div></div></div>
+        </div>
+    </div>
+
+    <div id="prep-book" class="tab-pane">
+        <div class="note note-success">✅ Al geboekt: Alle vluchten (behalve BNE→SYD) • QT Hotel SG • Pacific Hotel Cairns • Maui Campervan • Opera House</div>
+        <div class="prep-grid">
+            <div class="prep-card"><div class="prep-head nor"><div class="prep-icon">🎭</div><div><h3>Opera House ✅ Geboekt</h3><p>6 oktober 18:30</p></div></div><div class="prep-body"><span class="dl dl-ok">✅ Bevestigd</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item done" onclick="clToggle(this)"><div class="cl-box-chk">✓</div><span class="cl-txt">Tickets geboekt ✅</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Opera Bar reservering voor aanvang (17:45)<span class="cl-sub">operabar.com.au</span></span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Na-show diner reserveren (20:30+)<span class="cl-sub">Bennelong, Quay of Aria – vermeld huwelijksreis!</span></span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head urg"><div class="prep-icon">🐠</div><div><h3>Great Barrier Reef Tocht</h3><p>24 september – boek vooraf!</p></div></div><div class="prep-body"><span class="dl dl-now">⚠️ Boek snel</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Reef tour geboekt (Sailaway / Quicksilver)<span class="cl-sub">~€120–€150pp</span></span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Optioneel: intro-duiken toevoegen</span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head urg"><div class="prep-icon">⛵</div><div><h3>Whitehaven Beach</h3><p>Australië's mooiste strand!</p></div></div><div class="prep-body"><span class="dl dl-now">⚠️ Boek vooraf</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Whitehaven dagtocht (27 of 28 sep)<span class="cl-sub">Explore Whitsundays – ~€100–€150pp</span></span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head imp"><div class="prep-icon">🍽️</div><div><h3>Afscheidsdiner Sydney</h3><p>8 oktober – laatste huwelijksreis avond</p></div></div><div class="prep-body"><span class="dl dl-soon">📅 Reserveer snel!</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Quay / Bennelong / Aria reserveren (8 okt)<span class="cl-sub">Tot 3 maanden vooruit vol! Vermeld huwelijksreis!</span></span></div></div></div></div>
+        </div>
+    </div>
+
+    <div id="prep-fin" class="tab-pane">
+        <div class="prep-grid">
+            <div class="prep-card"><div class="prep-head imp"><div class="prep-icon">💳</div><div><h3>Bank & Betaalkaarten</h3><p>Regel voor vertrek</p></div></div><div class="prep-body"><span class="dl dl-soon">📅 Week voor vertrek</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Bank informeren over reisdata<span class="cl-sub">ING/ABN/Rabo – anders kaart geblokkeerd!</span></span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Wise kaart aanvragen (wise.com – gratis)</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Creditcard meenemen (Maui borg!)</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Noodcontanten: AUD $200 + SGD $100</span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head inf"><div class="prep-icon">📱</div><div><h3>Telefoon & Apps</h3><p>Blijf verbonden onderweg</p></div></div><div class="prep-body"><span class="dl dl-soon">📅 Voor vertrek</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Telstra SIM / eSIM Australië<span class="cl-sub">Beste bereik in afgelegen QLD!</span></span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Singapore SIM / eSIM of roaming NL</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Google Maps offline (SG + QLD + NSW)</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">WikiCamps Australia app (~€5)</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Grab app (Singapore)</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Spotify offline playlists 🎵</span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head nor"><div class="prep-icon">🏠</div><div><h3>Thuis Regelen</h3><p>Huis & persoonlijke zaken</p></div></div><div class="prep-body"><span class="dl dl-soon">📅 Week voor vertrek</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Post ophaalservice regelen</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Sleutel bij vertrouwde persoon</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Planten water geven regelen</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Out-of-office e-mail instellen</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Thuisverzekeraar informeren (>30 dagen weg)</span></div></div></div></div>
+            <div class="prep-card"><div class="prep-head inf"><div class="prep-icon">🎒</div><div><h3>Dag voor Vertrek (17 sep)</h3><p>Laatste check!</p></div></div><div class="prep-body"><span class="dl dl-soon">📅 17 september</span><div class="cl-box" style="box-shadow:none;padding:0;margin-top:8px"><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Online inchecken KLM (30u voor vertrek)</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">Handbagage gewicht controleren (max 12kg)</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">🎭 Opera tickets in handbagage</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">🚐 Maui bevestiging in handbagage</span></div><div class="cl-item" onclick="clToggle(this)"><div class="cl-box-chk"></div><span class="cl-txt">💕 Vroeg slapen – het avontuur begint morgen!</span></div></div></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TIPS & BUDGET ==================== -->
+<div id="tips" class="section">
+    <div class="sec-head"><h2>💡 Tips & Budget</h2><div class="divider"></div><p>Handige tips & kostenraming</p></div>
+    <div class="sub-tabs">
+        <button class="sub-tab" onclick="tab('tips','tips-tips')">💡 Tips</button>
+        <button class="sub-tab" onclick="tab('tips','tips-budget')">💰 Budget</button>
+    </div>
+    <div id="tips-tips" class="tab-pane active">
+        <div class="tips-grid">
+            <div class="tip-card"><h4>🇸🇬 Singapore Tips</h4><ul><li>EZ-Link kaart voor de MRT</li><li>Grab app voor taxi's</li><li>Kraanwater 100% drinkbaar</li><li>Altijd cash voor hawker centres</li><li>Gardens show gratis van de grond!</li><li>Airco overal – neem vestje mee</li></ul></div>
+            <div class="tip-card"><h4>🎭 Opera House Tips</h4><ul><li>Kom 30–45 min voor aanvang (18:00)</li><li>Smart casual VERPLICHT</li><li>Vertel personeel = huwelijksreis!</li><li>Opera Bar voor aanvang = romantisch</li><li>Tickets digitaal + uitgeprint</li><li>Na show: nachtelijke haven wandeling!</li></ul></div>
+            <div class="tip-card"><h4>🚐 Maui Campervan Tips</h4><ul><li>Controleer camper bij ophalen + foto's!</li><li>Rijden aan de LINKER kant!</li><li>WikiCamps app voor campings</li><li>Tank op in grotere plaatsen</li><li>Telstra SIM voor beste bereik</li><li>Kook in camper – scheelt enorm!</li></ul></div>
+            <div class="tip-card"><h4>🐊 Queensland Tips</h4><ul><li>SPF 50+ altijd – UV is extreem!</li><li>Nooit zwemmen in rivieren N. Cairns</li><li>Lifeguard vlaggen op strand volgen</li><li>Stingerseizoen begint november – safe!</li><li>Vroeg vertrekken voor populaire spots</li><li>Coles & Woolworths voor boodschappen</li></ul></div>
+            <div class="tip-card"><h4>🌉 Sydney Tips</h4><ul><li>Opal Card voor trein, veerboot & bus</li><li>Manly veerboot IS een attractie!</li><li>Oktober = lente ~20°C</li><li>Restaurants vroeg reserveren</li><li>BridgeClimb geweldig voor huwelijksreis</li><li>Airport trein = makkelijkste optie</li></ul></div>
+            <div class="tip-card"><h4>💕 Huwelijksreis Tips</h4><ul><li>Hotels altijd vertellen = huwelijksreis!</li><li>Afscheidsdiner Sydney nú reserveren</li><li>Nacht in Maui onder de sterren ✨</li><li>Opera Bar cocktail = magisch moment</li><li>Sunrise Cape Tribulation = romantisch</li><li>Sunset Whitehaven Beach = onvergetelijk</li></ul></div>
+        </div>
+    </div>
+    <div id="tips-budget" class="tab-pane">
+        <div class="budget-card">
+            <h3 style="margin-bottom:18px;color:var(--dark)">💰 Geschatte Budgetraming</h3>
+            <div class="b-item"><div class="b-label"><span>✈️</span><span>KLM + Singapore Airlines + Vietnam Airlines</span></div><div class="b-amount">Al betaald ✅</div></div>
+            <div class="b-item"><div class="b-label"><span>🏨</span><span>QT Hotel Singapore (2 nachten)</span></div><div class="b-amount">Al betaald ✅</div></div>
+            <div class="b-item"><div class="b-label"><span>🏨</span><span>Pacific Hotel Cairns (1 nacht)</span></div><div class="b-amount">Al betaald ✅</div></div>
+            <div class="b-item"><div class="b-label"><span>🚐</span><span>Maui Campervan (11 dagen)</span></div><div class="b-amount">Al betaald ✅</div></div>
+            <div class="b-item"><div class="b-label"><span>🎭</span><span>Sydney Opera House tickets (x2)</span></div><div class="b-amount">Al betaald ✅</div></div>
+            <div class="b-item"><div class="b-label"><span>🏕️</span><span>Campingkosten Maui (11 nachten) ~AUD $440</span></div><div class="b-amount">~€260</div></div>
+            <div class="b-item"><div class="b-label"><span>✈️</span><span>Brisbane → Sydney (binnenlands)</span></div><div class="b-amount">~€100–€150</div></div>
+            <div class="b-item"><div class="b-label"><span>🏨</span><span>Sydney hotel (5 nachten)</span></div><div class="b-amount">~€700–€3.500</div></div>
+            <div class="b-item"><div class="b-label"><span>🐠</span><span>Great Barrier Reef boottocht (x2)</span></div><div class="b-amount">~€250</div></div>
+            <div class="b-item"><div class="b-label"><span>⛵</span><span>Whitehaven Beach dagtocht (x2)</span></div><div class="b-amount">~€200</div></div>
+            <div class="b-item"><div class="b-label"><span>🌿</span><span>Singapore attracties (Gardens etc.)</span></div><div class="b-amount">~€80</div></div>
+            <div class="b-item"><div class="b-label"><span>🍽️</span><span>Eten & drinken totaal (22 dagen)</span></div><div class="b-amount">~€900–€1.500</div></div>
+            <div class="b-item"><div class="b-label"><span>⛽</span><span>Brandstof Maui (~1.750 km)</span></div><div class="b-amount">~€250</div></div>
+            <div class="b-item"><div class="b-label"><span>🎢</span><span>Sydney activiteiten (BridgeClimb, etc.)</span></div><div class="b-amount">~€300</div></div>
+            <div class="b-item"><div class="b-label"><span>💉</span><span>Vaccinaties & reisarts</span></div><div class="b-amount">~€150–€300</div></div>
+            <div class="b-item"><div class="b-label"><span>🔒</span><span>Reisverzekering</span></div><div class="b-amount">~€150–€250</div></div>
+            <div class="b-item" style="border-top:2px solid var(--secondary);padding-top:13px;margin-top:5px"><div class="b-label"><strong>💎 Totaal nog te besteden (excl. al betaalde items)</strong></div><div class="b-amount" style="font-size:1.1em;color:var(--dark)">~€3.500–€7.000</div></div>
+        </div>
+        <div class="note note-warn">💡 Grootste variabele: <strong>Sydney hotel</strong>. Park Hyatt (€550/nacht) vs Adina (€150/nacht) = €2.000 verschil. Koken in de Maui campervan bespaart ook honderden euro's!</div>
+    </div>
+</div>
+
+</div><!-- /container -->
+<div style="text-align:center;padding:25px;color:#bbb;font-size:0.82em">💕 Jullie huwelijksreis dashboard • Singapore & Australië 2026 💕</div>
+
+<script>
+    function go(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        var sec = document.getElementById(id);
+        if (sec) sec.classList.add('active');
+        document.querySelectorAll('.nav-btn').forEach(b => {
+            if (b.getAttribute('onclick') === "go('" + id + "')") b.classList.add('active');
+        });
+        window.scrollTo({ top: 70, behavior: 'smooth' });
+    }
+
+    function tab(group, paneId) {
+        var pane = document.getElementById(paneId);
+        if (!pane) return;
+        var parent = pane.parentElement;
+        parent.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        pane.classList.add('active');
+        var section = pane.closest('.section');
+        if (section) {
+            section.querySelectorAll('.sub-tab').forEach(t => {
+                t.classList.remove('active');
+                if (t.getAttribute('onclick') === "tab('" + group + "','" + paneId + "')") {
+                    t.classList.add('active');
+                }
+            });
+        }
+        updatePackCounter(paneId);
+    }
+
+    function clToggle(el) {
+        el.classList.toggle('done');
+        el.querySelector('.cl-box-chk').textContent = el.classList.contains('done') ? '✓' : '';
+    }
+
+    function pkToggle(el, cat) {
+        el.classList.toggle('done');
+        el.querySelector('.pack-cb').textContent = el.classList.contains('done') ? '✓' : '';
+        updatePackCounter('pak-' + cat);
+    }
+
+    function updatePackCounter(tabId) {
+        var pane = document.getElementById(tabId);
+        if (!pane) return;
+        var cat = tabId.replace('pak-', '');
+        var counter = document.getElementById('cnt-' + cat);
+        if (!counter) return;
+        var all = pane.querySelectorAll('.pack-item');
+        var done = pane.querySelectorAll('.pack-item.done');
+        counter.textContent = done.length + ' / ' + all.length + ' ingepakt';
+        counter.style.color = (done.length === all.length && all.length > 0) ? '#5a8a6a' : '#c8956c';
+    }
+
+    window.addEventListener('load', function () {
+        document.querySelector('.nav-btn').classList.add('active');
+
+        setTimeout(function () {
+            document.querySelectorAll('.prog-fill').forEach(function (bar) {
+                var w = bar.getAttribute('data-w');
+                if (w) bar.style.width = w + '%';
+            });
+        }, 400);
+
+        ['kleding','toilet','ehbo','camper','docs'].forEach(function(c) {
+            var pane = document.getElementById('pak-' + c);
+            var counter = document.getElementById('cnt-' + c);
+            if (pane && counter) {
+                counter.textContent = '0 / ' + pane.querySelectorAll('.pack-item').length + ' ingepakt';
+            }
+        });
+
+        document.querySelectorAll('.sub-tabs').forEach(function(tabs) {
+            var first = tabs.querySelector('.sub-tab');
+            if (first) first.classList.add('active');
+        });
+    });
+</script>
+</body>
+</html>
